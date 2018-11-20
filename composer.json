@@ -1,0 +1,37 @@
+{
+	"name": "kuriousagency/commerce-braintree",
+	"description": "Braintree gateway for Commerce 2",
+	"type": "craft-plugin",
+	"version": "1.0.2",
+	"keywords": [
+		"craft",
+		"cms",
+		"craftcms",
+		"craft-plugin",
+		"commerce braintree"
+	],
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Kurious Agency",
+			"homepage": "https://kurious.agency"
+		}
+	],
+	"require": {
+		"craftcms/commerce": "^2.0.0-alpha.6",
+		"craftcms/commerce-omnipay": "^1.0.0",
+		"omnipay/braintree": "^1.1"
+	},
+	"autoload": {
+		"psr-4": {
+			"kuriousagency\\commerce\\braintree\\": "src/"
+		}
+	},
+	"extra": {
+		"name": "Braintree for Craft Commerce",
+		"handle": "commerce-braintree",
+		"hasCpSettings": false,
+		"hasCpSection": false,
+		"class": "kuriousagency\\commerce\\braintree\\Braintree"
+	}
+}

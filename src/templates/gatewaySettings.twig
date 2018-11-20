@@ -1,0 +1,62 @@
+{# @var craft \craft\web\twig\variables\CraftVariable #}
+{#
+/**
+ * Commerce Braintree plugin for Craft CMS 3.x
+ *
+ * Commerce Braintree Settings.twig
+ *
+ * @author    Kurious Agency
+ * @copyright Copyright (c) 2018 Kurious Agency
+ * @link      https://kurious.agency
+ * @package   CommerceBraintree
+ * @since     1.0.0
+ */
+#}
+
+{% from "_includes/forms" import textField, lightswitchField %}
+
+{{ textField({
+    label: 'Merchant Id'|t('commerce'),
+    id: 'merchantId',
+    class: 'ltr',
+    name: 'merchantId',
+    value: gateway.merchantId,
+    errors: gateway.getErrors('merchantId')
+}) }}
+
+{{ textField({
+    label: 'Public Key'|t('commerce'),
+    id: 'publicKey',
+    class: 'ltr',
+    name: 'publicKey',
+    value: gateway.publicKey,
+    errors: gateway.getErrors('publicKey')
+}) }}
+
+{{ textField({
+    label: 'Private Key'|t('commerce'),
+    id: 'privateKey',
+    class: 'ltr',
+    name: 'privateKey',
+    value: gateway.privateKey,
+    errors: gateway.getErrors('privateKey')
+}) }}
+
+
+ {{ lightswitchField({
+     label: "Test mode?"|t('commerce'),
+     name: 'testMode',
+     on: gateway.testMode,
+     errors: gateway.getErrors('testMode'),
+ }) }}
+
+<hr>
+
+{% for currency in craft.commerce.paymentCurrencies.getAllPaymentCurrencies %}
+{{ textField({
+    label: currency.iso~' Merchant Account Id'|t('commerce'),
+    class: 'ltr',
+    name: 'merchantAccountId['~currency.iso~']',
+    value: gateway.merchantAccountId[currency.iso] ?? null,
+}) }}
+{% endfor %}
