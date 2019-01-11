@@ -99,12 +99,12 @@ class Gateway extends CreditCardGateway
 		];
 		//Craft::dd($this->getPaymentFormModel());
 
-		$request = Craft::$app->getRequest();
-		$orderId = $request->getParam('orderId');
-		$order = Commerce::getInstance()->getOrders()->getOrderById($orderId);
-
 		$params = array_merge($defaults, $params);
-		$params['order'] = $order;
+
+		if(Craft::$app->getRequest()->getParam('orderId')) {
+			$order = Commerce::getInstance()->getOrders()->getOrderById(Craft::$app->getRequest()->getParam('orderId'));
+			$params['order'] = $order;
+		}
 		//Craft::dd($params);
 
         $view = Craft::$app->getView();
