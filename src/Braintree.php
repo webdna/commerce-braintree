@@ -12,13 +12,14 @@ namespace kuriousagency\commerce\braintree;
 
 use kuriousagency\commerce\braintree\models\Settings;
 use kuriousagency\commerce\braintree\assetbundles\dropinui\DropinUiAsset;
+use kuriousagency\commerce\braintree\gateways\Gateway;
+
+use Braintree as BT;
 
 use Craft;
 use craft\base\Plugin;
 use craft\services\Plugins;
 use craft\events\PluginEvent;
-
-use kuriousagency\commerce\braintree\gateways\Gateway;
 use craft\commerce\services\Gateways;
 use craft\events\RegisterComponentTypesEvent;
 

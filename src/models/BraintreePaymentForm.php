@@ -28,11 +28,13 @@ class BraintreePaymentForm extends BasePaymentForm
      * @var string credit card reference
      */
 	public $nonce;
+	public $token;
 	public $firstName;
 	public $lastName;
 	public $number;
 	public $expiry;
 	public $cvv;
+	public $paymentMethod;
 
 	//public $amount;
 
@@ -41,8 +43,7 @@ class BraintreePaymentForm extends BasePaymentForm
      */
     public function populateFromPaymentSource(PaymentSource $paymentSource)
     {
-		$this->nonce = $paymentSource->nonce;
-		//$this->amount = $paymentSource->amount;
+		$this->token = $paymentSource->token;
     }
 
     /**
@@ -50,7 +51,7 @@ class BraintreePaymentForm extends BasePaymentForm
      */
     public function rules(): array
     {
-        if (empty($this->nonce)) {
+        if (empty($this->nonce) || empty($this->token)) {
             return parent::rules();
         }
 
