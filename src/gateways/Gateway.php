@@ -66,6 +66,8 @@ class Gateway extends BaseGateway
     public $testMode;
 
 	public $merchantAccountId;
+
+	public $sendCartInfo;
 	
 	private $gateway;
 
