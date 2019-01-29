@@ -10,21 +10,37 @@
 
 namespace kuriousagency\commerce\braintree\gateways;
 
-use Craft;
-use craft\commerce\errors\PaymentException;
 use kuriousagency\commerce\braintree\assetbundles\dropinui\DropinUiAsset;
 use kuriousagency\commerce\braintree\assetbundles\hostedfields\HostedFieldsAsset;
 use kuriousagency\commerce\braintree\models\BraintreePaymentForm;
-use craft\commerce\models\payments\BasePaymentForm;
-use craft\commerce\omnipay\base\CreditCardGateway;
-use craft\web\View;
-use Omnipay\Common\AbstractGateway;
-use Omnipay\Common\Message\ResponseInterface;
-use Omnipay\Braintree\Message\Response;
-use Omnipay\Omnipay;
-use Omnipay\Braintree\Gateway as OmnipayGateway;
-use craft\commerce\Plugin as Commerce;
+use kuriousagency\commerce\braintree\responses\PaymentResponse;
 
+use Braintree;
+
+use Craft;
+use craft\commerce\base\Gateway as BaseGateway;
+use craft\commerce\base\RequestResponseInterface;
+use craft\commerce\errors\PaymentException;
+use craft\commerce\errors\TransactionException;
+use craft\commerce\models\Currency;
+use craft\commerce\models\payments\BasePaymentForm;
+use craft\commerce\models\PaymentSource;
+use craft\commerce\models\Transaction;
+use craft\commerce\Plugin as Commerce;
+use craft\commerce\records\Transaction as TransactionRecord;
+use craft\elements\User;
+use craft\helpers\DateTimeHelper;
+use craft\helpers\Json;
+use craft\helpers\StringHelper;
+use craft\helpers\UrlHelper;
+use craft\web\Response as WebResponse;
+use craft\web\View;
+use craft\db\Query;
+use craft\db\Command;
+use yii\base\Exception;
+use yii\base\NotSupportedException;
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
 
 /**
  * Gateway represents Braintree gateway
@@ -34,58 +50,50 @@ use craft\commerce\Plugin as Commerce;
  * @since     1.0.0
  *
  */
-class Gateway extends CreditCardGateway
+class Gateway extends BaseGateway
 {
     // Properties
     // =========================================================================
 
-    /**
-     * @var string
-     */
-    public $merchantId;
+	public $apiUrl = '';
+	
+	public $merchantId;
 
-    /**
-     * @var string
-     */
-    public $publicKey;
+	public $publicKey;
+	
+	public $privateKey;
 
-    /**
-     * @var boolean
-     */
     public $testMode;
 
-    /**
-     * @var string
-     */
-	public $privateKey;
-	
 	public $merchantAccountId;
-
-    /**
-     * @var bool Whether cart information should be sent to the payment gateway
-     */
-	public $sendCartInfo = false;
 	
-	private $_gateway;
+	private $gateway;
+
+	private $customer;
+
 
     // Public Methods
     // =========================================================================
 
-    /**
+	public function init()
+	{
+		parent::init();
+
+		$this->gateway = new Braintree\Gateway([
+			'environment' => $this->testMode ? 'sandbox' : 'production',
+			'merchantId' => $this->merchantId,
+			'publicKey' => $this->publicKey,
+			'privateKey' => $this->privateKey
+		]);
+	}
+	
+	/**
      * @inheritdoc
      */
     public static function displayName(): string
     {
         return Craft::t('commerce', 'Braintree');
     }
-
-    /**
-     * @inheritdoc
-     */
-    /*public function getPaymentConfirmationFormHtml(array $params): string
-    {
-        return $this->_displayFormHtml($params, 'commerce-eway/confirmationForm');
-    }*/
 
 
     /**
@@ -136,13 +144,13 @@ class Gateway extends CreditCardGateway
 		}
 		if ($user) {
 			try {
-				$customer = $this->createGateway()->findCustomer($user->uid)->send();
+				$customer = $this->getCustomer($user);
 			} catch (\Braintree_Exception_NotFound $e) {
 				$customer = null;
 			}
 			
 			if (!$customer) {
-				$customer = $this->createGateway()->createCustomer()->sendData([
+				$customer = $this->gateway->createCustomer()->sendData([
 					'id' => $user->uid,
 					'firstName' => $user->firstName,
 					'lastName' => $user->lastName,
@@ -152,18 +160,10 @@ class Gateway extends CreditCardGateway
 			$params['customerId'] = $user->uid;
 
 		}
-		$token = $this->createGateway()->clientToken($params)->send()->getToken();
+		$token = $this->gateway->clientToken($params)->generate($params);
 		
 		return $token;
 	}
-
-    /**
-     * @inheritdoc
-     */
-    public function getPaymentFormModel(): BasePaymentForm
-    {
-        return new BraintreePaymentForm();
-    }
 
     /**
      * @inheritdoc
@@ -176,53 +176,196 @@ class Gateway extends CreditCardGateway
     /**
      * @inheritdoc
      */
-    public function populateRequest(array &$request, BasePaymentForm $paymentForm = null)
+    /*public function populateRequest(array &$request, BasePaymentForm $paymentForm = null)
     {
         if ($paymentForm && $paymentForm->hasProperty('nonce') && $paymentForm->nonce) {
             $request['token'] = $paymentForm->nonce;
 		}
 		$request['merchantAccountId'] = $this->merchantAccountId[$request['currency']];
 		//Craft::dd($request);
+	}*/
+
+	public function getCustomer($user)
+	{
+		if (!$this->customer) {
+			$this->customer = $this->gateway->customer()->find($user->uid);
+		}
+		return $this->customer;
 	}
 
-    // Protected Methods
-    // =========================================================================
+	public function getPaymentMethod($token)
+	{
+		return $this->gateway->paymentMethod()->find($token);
+	}
 
-    /**
-     * @inheritdoc
-     */
-    protected function createGateway(): AbstractGateway
-    {
-		/** @var OmnipayGateway $gateway */
-		if ($this->_gateway == null) {
-			$this->_gateway = Omnipay::create($this->getGatewayClassName());
-
-			$this->_gateway->setMerchantId($this->merchantId);
-			$this->_gateway->setPublicKey($this->publicKey);
-			$this->_gateway->setPrivateKey($this->privateKey);
-			$this->_gateway->setTestMode($this->testMode);
+	public function setDefaultPaymentMethod($nonce, $user)
+	{
+		if (!$user) {
+			$user = Craft::$app->getUser()->getIdentity();
 		}
+		
+		return $this->gateway->paymentMethod()->create([
+			'customerId' => $user->uid,
+			'paymentMethodNonce' => $nonce,
+			'options' => [
+				'makeDefault' => true,
+			],
+		]);
+	}
 
-        return $this->_gateway;
-    }
+	/*public function getNonce($token)
+	{
+		$result = $this->gateway->paymentMethodNonce()->create($token);
+		return $result->paymentMethodNonce->nonce;
+	}*/
 
 
-    /**
-     * @inheritdoc
-     */
-    // protected function extractPaymentSourceDescription(ResponseInterface $response): string
-    // {
-    //     $data = $response->getData();
+	
+	public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
+	{
 
-    //     return Craft::t('commerce-eway', 'Payment card {masked}', ['masked' => $data['Customer']['CardDetails']['Number']]);
-    // }
+	}
 
-    /**
-     * @inheritdoc
-     */
-    protected function getGatewayClassName()
-    {
-        return '\\'.OmnipayGateway::class;
-    }
+	public function capture(Transaction $transaction, string $reference): RequestResponseInterface
+	{
+
+	}
+
+	public function completeAuthorize(Transaction $transaction): RequestResponseInterface
+	{
+
+	}
+
+	public function createPaymentSource(BasePaymentForm $sourceData, int $userId): PaymentSource
+	{
+		try {
+			//$response = $this->getPaymentMethod($sourceData->paymentMethod->token);
+			$paymentMethod = $sourceData->paymentMethod;
+			//Craft::dd($response);
+
+			$description = Craft::t('commerce-braintree', '{cardType} ending in ••••{last4}', ['cardType' => $paymentMethod->cardType, 'last4' => $paymentMethod->last4]);
+
+			$paymentSource = new PaymentSource([
+				'userId' => Craft::$app->getUser()->getId(),
+				'gatewayId' => $this->id,
+				'token' => $paymentMethod->token,
+				'response' => $paymentMethod,
+				'description' => $description,
+			]);
+
+			return $paymentSource;
+		} catch (\Throwable $exception) {
+			throw new CommercePaymentSourceException($exception->getMessage());
+		}
+	}
+
+	public function deletePaymentSource($token): bool
+	{
+		return true;
+	}
+
+	public function getPaymentFormModel(): BasePaymentForm
+	{
+		return new BraintreePaymentForm();
+	}
+
+	public function purchase(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
+	{
+		//Craft::dd($transaction);
+		try {
+			$order = $transaction->getOrder();
+			$data = [
+				'amount' => $transaction->paymentAmount,
+				'orderId' => $order->reference,
+				'options' => [ 'submitForSettlement' => true ]
+			];
+			if ($form->nonce) {
+				$data['paymentMethodNonce'] = $form->nonce;
+			} elseif ($form->token) {
+				$data['paymentMethodToken'] = $form->token;
+			}
+			if (isset($this->merchantAccountId[$transaction->currency])) {
+				$params['merchantAccountId'] = $this->merchantAccountId[$transaction->$currency];
+			}
+
+			$result = $this->gateway->transaction()->sale($data);
+
+			//Craft::dd($result);
+
+			return new PaymentResponse($result);
+			
+		} catch (\Exception $exception) {
+			throw $exception;
+		}
+	}
+
+	public function completePurchase(Transaction $transaction): RequestResponseInterface
+	{
+
+	}
+
+	public function refund(Transaction $transaction): RequestResponseInterface
+	{
+		//Craft::dd($transaction);
+		try {
+			$result = $this->gateway->transaction()->refund($transaction->reference, $transaction->amount);
+			return new PaymentResponse($result);
+
+		} catch (\Exception $exception) {
+			throw $exception;
+		}
+	}
+
+	public function processWebHook(): WebResponse
+	{
+
+	}
+
+
+	public function supportsAuthorize(): bool
+	{
+		return false;
+	}
+
+	public function supportsCapture(): bool
+	{
+		return false;
+	}
+
+	public function supportsCompleteAuthorize(): bool
+	{
+		return false;
+	}
+
+	public function supportsCompletePurchase(): bool
+	{
+		return false;
+	}
+
+	public function supportsPaymentSources(): bool
+	{
+		return true;
+	}
+
+	public function supportsPurchase(): bool
+	{
+		return true;
+	}
+
+	public function supportsRefund(): bool
+	{
+		return true;
+	}
+
+	public function supportsPartialRefund(): bool
+	{
+		return true;
+	}
+
+	public function supportsWebhooks(): bool
+	{
+		return false;
+	}
+
 
 }

@@ -50,9 +50,12 @@
      errors: gateway.getErrors('testMode'),
  }) }}
 
-<hr>
 
-{% for currency in craft.commerce.paymentCurrencies.getAllPaymentCurrencies %}
+
+{% set currencies = craft.commerce.paymentCurrencies.getAllPaymentCurrencies %}
+{% if currencies|length > 1 %}
+<hr>
+{% for currency in currencies %}
 {{ textField({
     label: currency.iso~' Merchant Account Id'|t('commerce'),
     class: 'ltr',
@@ -60,3 +63,4 @@
     value: gateway.merchantAccountId[currency.iso] ?? null,
 }) }}
 {% endfor %}
+{% endif %}
