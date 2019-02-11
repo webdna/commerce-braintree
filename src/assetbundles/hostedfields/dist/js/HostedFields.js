@@ -17,7 +17,7 @@ var $token = $('#btToken'),
 	$submit = $form.find('input[type="submit"]'),
 	hostedFields = null;
 
-$form.attr('action', '/');
+//$form.attr('action', '/');
 
 (function check() {
 	if (typeof braintree !== 'undefined' && typeof braintree.client !== 'undefined') {
