@@ -1,7 +1,8 @@
 
+
 <input type="hidden" id="btToken" name="token" value="{{ craft.commerce.gateways.getGatewayByHandle('braintree').getToken() }}" />
 <input type="hidden" id="btNonce" name="nonce" value="" />
-<input type="hidden" id="btAmount" data-currency="{{ order.paymentCurrency }}" value="{{ order.outstandingBalance }}" />
+<input type="hidden" id="btAmount" data-currency="{{ order.paymentCurrency }}" value="10{#{{ order.outstandingBalance }}#}" />
 {# <div id="dropInUi"></div> #}
 {# <fieldset class="card-holder">
     <legend>Card Holder</legend>

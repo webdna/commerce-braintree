@@ -22,7 +22,7 @@ use craft\base\Model;
  * @package   CommerceBraintree
  * @since     1.0.0
  */
-class BraintreePaymentForm extends BasePaymentForm
+class Payment extends BasePaymentForm
 {
     /**
      * @var string credit card reference

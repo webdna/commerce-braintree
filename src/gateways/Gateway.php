@@ -12,20 +12,32 @@ namespace kuriousagency\commerce\braintree\gateways;
 
 use kuriousagency\commerce\braintree\assetbundles\dropinui\DropinUiAsset;
 use kuriousagency\commerce\braintree\assetbundles\hostedfields\HostedFieldsAsset;
-use kuriousagency\commerce\braintree\models\BraintreePaymentForm;
+use kuriousagency\commerce\braintree\models\Payment;
+use kuriousagency\commerce\braintree\models\CancelSubscription;
+use kuriousagency\commerce\braintree\models\Plan;
 use kuriousagency\commerce\braintree\responses\PaymentResponse;
 
 use Braintree;
 
 use Craft;
-use craft\commerce\base\Gateway as BaseGateway;
+//use craft\commerce\base\Gateway as BaseGateway;
 use craft\commerce\base\RequestResponseInterface;
+use craft\commerce\base\Plan as BasePlan;
+use craft\commerce\base\PlanInterface;
+use craft\commerce\base\SubscriptionGateway as BaseGateway;
+use craft\commerce\base\SubscriptionResponseInterface;
+use craft\commerce\elements\Subscription;
 use craft\commerce\errors\PaymentException;
 use craft\commerce\errors\TransactionException;
+use craft\commerce\errors\SubscriptionException;
 use craft\commerce\models\Currency;
 use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\models\PaymentSource;
 use craft\commerce\models\Transaction;
+use craft\commerce\models\subscriptions\CancelSubscriptionForm as BaseCancelSubscriptionForm;
+use craft\commerce\models\subscriptions\SubscriptionForm;
+use craft\commerce\models\subscriptions\SubscriptionPayment;
+use craft\commerce\models\subscriptions\SwitchPlansForm;
 use craft\commerce\Plugin as Commerce;
 use craft\commerce\records\Transaction as TransactionRecord;
 use craft\elements\User;
@@ -103,6 +115,10 @@ class Gateway extends BaseGateway
      */
     public function getPaymentFormHtml(array $params)
     {
+		//TODO : if cp use hosted field else use dropinui
+		// $this->getCpPaymentFormHtml();
+		// $this->getSitePaymentFormHtml();
+
         $defaults = [
 			'gateway' => $this,
 			'paymentForm' => $this->getPaymentFormModel(),
@@ -114,6 +130,8 @@ class Gateway extends BaseGateway
 		if(Craft::$app->getRequest()->getParam('orderId')) {
 			$order = Commerce::getInstance()->getOrders()->getOrderById(Craft::$app->getRequest()->getParam('orderId'));
 			$params['order'] = $order;
+		} else {
+			$params['order'] = Commerce::getInstance()->getCarts()->getCart();
 		}
 		//Craft::dd($params);
 
@@ -268,7 +286,7 @@ class Gateway extends BaseGateway
 
 	public function getPaymentFormModel(): BasePaymentForm
 	{
-		return new BraintreePaymentForm();
+		return new Payment();
 	}
 
 	public function purchase(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
@@ -318,6 +336,135 @@ class Gateway extends BaseGateway
 		}
 	}
 
+
+	// Subscriptions
+
+	public function cancelSubscription(Subscription $subscription, BaseCancelSubscriptionForm $parameters): SubscriptionResponseInterface
+    {
+
+	}
+
+	public function getCancelSubscriptionFormHtml(Subscription $subscription): string
+    {
+        $view = Craft::$app->getView();
+
+        $previousMode = $view->getTemplateMode();
+        $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+
+        $html = $view->renderTemplate('commerce-braintree/cancelSubscriptionForm');
+        $view->setTemplateMode($previousMode);
+
+        return $html;
+	}
+	
+	public function getCancelSubscriptionFormModel(): BaseCancelSubscriptionForm
+    {
+        return new CancelSubscription();
+	}
+	
+	public function getNextPaymentAmount(Subscription $subscription): string
+    {
+
+	}
+
+
+	public function getPlanModel(): BasePlan
+    {
+        return new Plan();
+	}
+	
+	public function getPlanSettingsHtml(array $params = [])
+    {
+		$params['plans'] = [];
+		foreach ($this->getSubscriptionPlans() as $plan)
+		{
+			$params['plans'][] = [
+				'label' => $plan->name,
+				'value' => $plan->id,
+			];
+		}
+		return Craft::$app->getView()->renderTemplate('commerce-braintree/planSettings', $params);
+	}
+	
+	public function getSubscriptionFormHtml(): string
+    {
+        $view = Craft::$app->getView();
+
+        $previousMode = $view->getTemplateMode();
+        $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+
+        $html = $view->renderTemplate('commerce-braintree/subscriptionForm');
+        $view->setTemplateMode($previousMode);
+
+        return $html;
+	}
+	
+	public function getSubscriptionFormModel(): SubscriptionForm
+    {
+        return new SubscriptionForm();
+	}
+	
+
+	public function getSubscriptionPayments(Subscription $subscription): array
+    {
+		
+	}
+
+	public function getSubscriptionPlanByReference(string $reference): string
+    {
+		if (empty($reference)) {
+            return '';
+		}
+
+		foreach ($this->getSubscriptionPlans() as $plan)
+		{
+			if ($plan->id == $reference) {
+				return Json::encode($plan);
+			}
+		}
+
+		return '';
+	}
+
+	public function getSubscriptionPlans(): array
+    {
+		$plans = $this->gateway->plan()->all();
+		return $plans;
+
+		$output = [];
+		foreach ($plans as $plan)
+		{
+			$output[] = [
+				'label' => $plan->name,
+				'value' => $plan->id,
+			];
+		}
+
+        return $output;
+	}
+
+	public function subscribe(User $user, BasePlan $plan, SubscriptionForm $parameters): SubscriptionResponseInterface
+    {
+
+	}
+
+	public function getSwitchPlansFormHtml(PlanInterface $originalPlan, PlanInterface $targetPlan): string
+    {
+
+	}
+
+	public function getSwitchPlansFormModel(): SwitchPlansForm
+    {
+
+	}
+
+	public function switchSubscriptionPlan(Subscription $subscription, BasePlan $plan, SwitchPlansForm $parameters): SubscriptionResponseInterface
+    {
+
+	}
+
+
+
 	public function processWebHook(): WebResponse
 	{
 
@@ -366,8 +513,29 @@ class Gateway extends BaseGateway
 
 	public function supportsWebhooks(): bool
 	{
-		return false;
+		return true;
 	}
 
+	public function supportsPlanSwitch(): bool
+    {
+        return false;
+	}
+	
+	public function supportsReactivation(): bool
+    {
+        return false;
+    }
 
+
+
+
+	private function getCpPaymentFormHtml()
+	{
+
+	}
+
+	private function getSitePaymentFormHtml()
+	{
+
+	}
 }

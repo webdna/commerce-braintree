@@ -108,7 +108,7 @@ $form.on('submit', function(event) {
 			//console.log('Got a nonce: ' + payload.nonce);
 			$nonce.val(payload.nonce);
 			$form.off('submit');
-			$submit.trigger('click');
+			$form.trigger('submit');
 		});
 	}
 });
