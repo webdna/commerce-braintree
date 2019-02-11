@@ -287,7 +287,7 @@ class Gateway extends BaseGateway
 				$data['paymentMethodToken'] = $form->token;
 			}
 			if (isset($this->merchantAccountId[$transaction->currency])) {
-				$params['merchantAccountId'] = $this->merchantAccountId[$transaction->$currency];
+				$params['merchantAccountId'] = $this->merchantAccountId[$transaction->currency];
 			}
 
 			$result = $this->gateway->transaction()->sale($data);
