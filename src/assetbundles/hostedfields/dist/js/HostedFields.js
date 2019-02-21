@@ -10,105 +10,101 @@
  * @since     1.0.0
  */
 
-var $token = $('#btToken'),
-	$nonce = $('#btNonce'),
-	$amount = $('#btAmount'),
-	$form = $token.parents('form'),
-	$submit = $form.find('input[type="submit"]'),
-	hostedFields = null;
 
-//$form.attr('action', '/');
+(function(){
 
-(function check() {
-	if (typeof braintree !== 'undefined' && typeof braintree.client !== 'undefined') {
-		init();
-	} else {
-		setTimeout(check, 50);
-	}
-})();
-
-function init() {
-	braintree.client.create(
-		{
-			authorization: $token.val()
-		},
-		function(clientErr, clientInstance) {
-			if (clientErr) {
-				console.error(clientErr);
-				return;
-			}
-
-			// This example shows Hosted Fields, but you can also use this
-			// client instance to create additional components here, such as
-			// PayPal or Data Collector.
-
-			braintree.hostedFields.create(
-				{
-					client: clientInstance,
-					styles: {
-						input: {
-							'font-size': '14px'
-						},
-						'input.invalid': {
-							color: 'red'
-						},
-						'input.valid': {
-							color: 'green'
-						}
-					},
-					fields: {
-						number: {
-							selector: '#card-number',
-							placeholder: 'Card Number'
-						},
-						cvv: {
-							selector: '#cvv',
-							placeholder: 'CVV'
-						},
-						expirationDate: {
-							selector: '#expiration-date',
-							placeholder: 'MM / YYYY'
-						}
-					}
-				},
-				function(hostedFieldsErr, hostedFieldsInstance) {
-					if (hostedFieldsErr) {
-						console.error(hostedFieldsErr);
-						return;
-					}
-
-					hostedFields = hostedFieldsInstance;
-				}
-			);
+	(function check() {
+		if (typeof braintree !== 'undefined' && typeof braintree.client !== 'undefined') {
+			init();
+		} else {
+			setTimeout(check, 50);
 		}
-	);
-}
+	})();
 
-$('#make-payment').on('click', function(e) {
-	//console.log('reset');
-	$('#card-number').empty();
-	$('#cvv').empty();
-	$('#expiration-date').empty();
-	init();
-});
+	function init() {
 
-$form.on('submit', function(event) {
-	//console.log($nonce.val());
-	if ($nonce.val() == '') {
-		event.preventDefault();
+		$('.gateway-form form').each(function(){
+			var $form = $(this);
+			
+			if ($form.find('[data-bt-hostedFields]')[0]) {
 
-		hostedFields.tokenize(function(tokenizeErr, payload) {
-			if (tokenizeErr) {
-				console.error(tokenizeErr);
-				return;
+				var $token = $form.find('[name="gatewayToken"]'),
+					$nonce = $form.find('[name="nonce"]'),
+					$amount = $form.find('[name="amount"]'),
+					$currency = $form.find('[name="currency"]'),
+					$submit = $form.find('input[type="submit"]');
+
+					braintree.client.create(
+						{
+							authorization: $token.val()
+						},
+						function(clientErr, clientInstance) {
+							if (clientErr) {
+								console.error(clientErr);
+								return;
+							}
+				
+							braintree.hostedFields.create(
+								{
+									client: clientInstance,
+									styles: {
+										input: {
+											'font-size': '14px'
+										},
+										'input.invalid': {
+											color: 'red'
+										},
+										'input.valid': {
+											color: 'green'
+										}
+									},
+									fields: {
+										number: {
+											selector: '#card-number',
+											placeholder: 'Card Number'
+										},
+										cvv: {
+											selector: '#cvv',
+											placeholder: 'CVV'
+										},
+										expirationDate: {
+											selector: '#expiration-date',
+											placeholder: 'MM / YYYY'
+										}
+									}
+								},
+								function(hostedFieldsErr, hostedFieldsInstance) {
+									if (hostedFieldsErr) {
+										console.error(hostedFieldsErr);
+										return;
+									}
+				
+									$form.on('submit', { hostedFields: hostedFieldsInstance }, formSubmit);
+								}
+							);
+						}
+					);
 			}
-
-			// If this was a real integration, this is where you would
-			// send the nonce to your server.
-			//console.log('Got a nonce: ' + payload.nonce);
-			$nonce.val(payload.nonce);
-			$form.off('submit');
-			$submit.trigger('click');
 		});
 	}
-});
+
+	function formSubmit(e) {
+		e.preventDefault();
+
+		var hostedFields = e.data.hostedFields,
+			$form = $(e.currentTarget);
+
+			hostedFields.tokenize(function(err, payload) {
+				if (err) {
+					console.error(err);
+					return;
+				}
+
+				$form.find('input[name=nonce]').val(payload.nonce);
+				$form.off('submit', formSubmit);
+				$form[0].submit();
+			});
+	}
+})()
+
+
