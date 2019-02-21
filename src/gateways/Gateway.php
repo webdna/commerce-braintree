@@ -122,8 +122,10 @@ class Gateway extends BaseGateway
         $defaults = [
 			'gateway' => $this,
 			'paymentForm' => $this->getPaymentFormModel(),
+			'threeDSecure' => false
 		];
 		//Craft::dd($this->getPaymentFormModel());
+		$cpRequest = Craft::$app->getRequest()->isCpRequest;
 
 		$params = array_merge($defaults, $params);
 
@@ -138,18 +140,28 @@ class Gateway extends BaseGateway
         $view = Craft::$app->getView();
 
         $previousMode = $view->getTemplateMode();
-        $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
+		
+		if ($cpRequest) {
+			$view->registerJsFile('https://js.braintreegateway.com/web/3.39.0/js/client.min.js');
+			$view->registerJsFile('https://js.braintreegateway.com/web/3.39.0/js/hosted-fields.min.js');
+			$view->registerAssetBundle(HostedFieldsAsset::class);
+			$html = $view->renderTemplate('commerce-braintree/paymentForms/hosted-fields', $params);
+		} else {
+			$params['order'] = Commerce::getInstance()->getCarts()->getCart();
+			$view->registerJsFile('https://js.braintreegateway.com/web/dropin/1.13.0/js/dropin.min.js');
+			$view->registerAssetBundle(DropinUiAsset::class);
+			$html = $view->renderTemplate('commerce-braintree/paymentForms/dropin-ui', $params);
+		}
 
 		//$view->registerJsFile('https://js.braintreegateway.com/web/dropin/1.13.0/js/dropin.min.js');
-		$view->registerJsFile('https://js.braintreegateway.com/web/3.39.0/js/client.min.js');
-		$view->registerJsFile('https://js.braintreegateway.com/web/3.39.0/js/hosted-fields.min.js');
-		$view->registerAssetBundle(HostedFieldsAsset::class);
+		
 		/*$script = '
 			alert("bob");
 		';
 		$view->registerScript($script, 1);*/
 
-        $html = $view->renderTemplate('commerce-braintree/paymentForm', $params);
+        
         $view->setTemplateMode($previousMode);
 
 		return $html;
@@ -170,7 +182,7 @@ class Gateway extends BaseGateway
 			}
 			
 			if (!$customer) {
-				$customer = $this->gateway->createCustomer()->sendData([
+				$customer = $this->gateway->customer()->create([
 					'id' => $user->uid,
 					'firstName' => $user->firstName,
 					'lastName' => $user->lastName,
@@ -305,7 +317,7 @@ class Gateway extends BaseGateway
 				$data['paymentMethodToken'] = $form->token;
 			}
 			if (isset($this->merchantAccountId[$transaction->currency])) {
-				$params['merchantAccountId'] = $this->merchantAccountId[$transaction->$currency];
+				$params['merchantAccountId'] = $this->merchantAccountId[$transaction->currency];
 			}
 
 			$result = $this->gateway->transaction()->sale($data);
@@ -493,7 +505,7 @@ class Gateway extends BaseGateway
 
 	public function supportsPaymentSources(): bool
 	{
-		return true;
+		return false;
 	}
 
 	public function supportsPurchase(): bool

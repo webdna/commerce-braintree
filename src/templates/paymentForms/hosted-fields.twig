@@ -1,0 +1,29 @@
+
+<input type="hidden" name="gatewayToken" value="{{ gateway.getToken() }}" />
+<input type="hidden" name="nonce" value="" />
+<input type="hidden" name="amount" value="{{ order.outstandingBalance }}" />
+<input type="hidden" name="currency" value="{{ order.paymentCurrency }}">
+
+<fieldset class="card-data" data-bt-hostedFields>
+    <legend>Card</legend>
+
+    <div class="multitext">
+        <div class="multitextrow">
+			<div id="card-number" class="text card-number fullwidth hosted-fields" style="height:32px;">
+                {# <input class="text card-number fullwidth" type="text" name="number" value="" maxlength="19" autocomplete="off" placeholder="Card Number"> #}
+			</div>
+        </div>
+
+        <div class="multitextrow">
+			<div id="expiration-date" class="text card-expiry fullwidth hosted-fields" style="height:32px;">
+                {# <input class="text card-expiry fullwidth" type="tel" name="expiry" value="" autocomplete="off" placeholder="MM / YYYY"> #}
+			</div>
+			<div id="cvv" class="text card-cvc fullwidth hosted-fields" style="height:32px;">
+                {# <input class="text card-cvc fullwidth" type="tel" name="cvv" value="" autocomplete="off" placeholder="CVV"> #}
+			</div>
+        </div>
+    </div>
+
+
+</fieldset>
+
