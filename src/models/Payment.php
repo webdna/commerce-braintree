@@ -35,6 +35,7 @@ class Payment extends BasePaymentForm
 	public $expiry;
 	public $cvv;
 	public $paymentMethod;
+	public $default;
 
 	//public $amount;
 

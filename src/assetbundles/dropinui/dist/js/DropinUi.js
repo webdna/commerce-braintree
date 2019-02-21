@@ -81,7 +81,7 @@
 				}
 			};
 
-			if ($dropinUi.data('threeDSecure')) {
+			if ($dropinUi.data('threedsecure')) {
 				options.threeDSecure = {
 					amount: $amount.val()
 				};
@@ -111,7 +111,7 @@
 						//$submit.prop('disabled', false);
 					});
 
-					$form.on('submit', { dropinInstance: dropinInstance }, formSubmit);
+					$form.on('submit', { dropinInstance:dropinInstance, threeDSecure:$dropinUi.data('threedsecure') }, formSubmit);
 
 				}
 			);
@@ -125,18 +125,19 @@
 		//console.log(e)
 		var dropinInstance = e.data.dropinInstance,
 			$form = $(e.currentTarget),
+			threeDSecure = e.data.threeDSecure,
 			$submit = $form.find('button[type="submit"]');
 		processing($submit);
 
 		dropinInstance.requestPaymentMethod(function(err, payload) {
 			if (err) {
-				//console.error(err);
+				console.error(err);
 				if (window.braintreeError ) { window.braintreeError(err) }
 				reset($submit);
 				return;
 			}
 			//console.log(payload);
-			if (payload.liabilityShifted || payload.type !== 'CreditCard') {
+			if (payload.liabilityShifted || payload.type !== 'CreditCard' || !threeDSecure) {
 				processing($submit);
 				$form.find('input[name=nonce]').val(payload.nonce);
 				$form.off('submit', formSubmit);

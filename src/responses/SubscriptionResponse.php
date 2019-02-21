@@ -1,0 +1,101 @@
+<?php
+/**
+ * Commerce Braintree plugin for Craft CMS 3.x
+ *
+ * Braintree gateway for Commerce 2
+ *
+ * @link      https://kurious.agency
+ * @copyright Copyright (c) 2018 Kurious Agency
+ */
+
+namespace kuriousagency\commerce\braintree\responses;
+
+use Craft;
+use craft\commerce\base\SubscriptionResponseInterface;
+use craft\commerce\errors\NotImplementedException;
+use craft\helpers\DateTimeHelper;
+use yii\base\InvalidConfigException;
+
+class SubscriptionResponse implements SubscriptionResponseInterface
+{
+    /**
+     * @var
+     */
+    protected $data = [];
+    /**
+     * Response constructor.
+     *
+     * @param $data
+     */
+    public function __construct($data)
+    {
+        $this->data = $data;
+    }
+    /**
+     * @inheritdoc
+     */
+    public function getReference(): string
+    {
+        if (empty($this->data)) {
+            return '';
+        }
+        return (string)$this->data->id;
+    }
+    /**
+     * @inheritdoc
+     */
+    public function getData()
+    {
+        return $this->data;
+    }
+    /**
+     * @inheritdoc
+     */
+    public function getTrialDays(): int
+    {
+        if (empty($this->data)) {
+            return 0;
+		}
+		return (int)$this->data->trialPeriod;
+		$now = new \DateTime();
+		$created = $this->data->createdAt;
+		$diff = $now->diff($created); 
+		return (int)$this->data->trialPeriod - $diff->days;
+		//Craft::dd($diff);
+        //return (int)(($this->data['trial_end'] - $this->data['trial_start']) / 60 / 60 / 24);
+    }
+    /**
+     * @inheritdoc
+     * @throws InvalidConfigException if no data
+     */
+    public function getNextPaymentDate(): \DateTime
+    {
+        if (empty($this->data)) {
+            throw new InvalidConfigException();
+		}
+		return $this->data->nextBillingDate;
+        //$timestamp = $this->data['current_period_end'];
+        //return DateTimeHelper::toDateTime($timestamp);
+    }
+    /**
+     * @inheritdoc
+     */
+    public function isCanceled(): bool
+    {
+        return $this->data->status === 'Canceled';
+    }
+    /**
+     * @inheritdoc
+     */
+    public function isScheduledForCancellation(): bool
+    {
+		if ($this->data->paidThroughDate) {
+			$now = new \DateTime();
+			if ($now->getTimestamp() < $this->data->paidThroughDate->getTimestamp() && $this->data->status === 'Canceled') {
+				return true;
+			}
+		}
+		return false;
+        //return (bool)$this->data['cancel_at_period_end'];
+    }
+}

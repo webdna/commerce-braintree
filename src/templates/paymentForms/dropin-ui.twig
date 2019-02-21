@@ -1,8 +1,5 @@
 
-<input type="hidden" name="gatewayToken" value="{{ gateway.getToken(savePaymentSource is defined and savePaymentSource ? currentUser : null) }}" />
-<input type="hidden" name="gatewayId" value="{{ gateway.id }}" />
+<input type="hidden" name="gatewayToken" value="{{ gateway.getToken(vault ? currentUser : null) }}" />
 <input type="hidden" name="nonce" value="" />
-<input type="hidden" name="amount" value="{{ order.outstandingBalance }}" />
-<input type="hidden" name="currency" value="{{ order.paymentCurrency }}">
-<div data-id="dropInUi" {{ gateway.testMode ? 'data-sandbox' }} data-name="{{ storeName ?? siteName }}" data-locale="{{ craft.i18n.getLocaleData().id|replace('-','_') }}" data-threeDSecure="{{ threeDSecure }}"></div>
+<div data-id="dropInUi" {{ gateway.testMode ? 'data-sandbox' }} data-name="{{ storeName ?? siteName }}" data-locale="{{ craft.i18n.getLocaleData().id|replace('-','_') }}" data-threedsecure="{{ threeDSecure }}"></div>
 

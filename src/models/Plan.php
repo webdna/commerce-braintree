@@ -27,37 +27,42 @@ class Plan extends BasePlan
     /**
      * @inheritdoc
      */
-    public function canSwitchFrom(PlanInterface $currentPlant): bool
+    public function canSwitchFrom(PlanInterface $currentPlan): bool
     {
-        return false;
+		return $this->frequency === $currentPlan->frequency;
 	}
 
-	public function description(): string
+	public function getDescription(): string
 	{
-		return $this->_getData()->description;
+		return $this->_getData()->description ?: '';
 	}
 
-	public function price(): string
+	public function getPrice(): string
 	{
 		return $this->_getData()->price;
 	}
 
-	public function frequency(): number
+	public function getCurrency(): string
+	{
+		return $this->_getData()->currencyIsoCode;
+	}
+
+	public function getFrequency()
 	{
 		return $this->_getData()->billingFrequency;
 	}
 
-	public function discounts()
+	public function getDiscounts()
 	{
 		return $this->_getData()->discounts;
 	}
 	
 	// trialing
-	public function canTrial(): bool
+	public function getCanTrial(): bool
 	{
 		return $this->_getData()->trialPeriod;
 	}
-	public function trialPeriod(): string
+	public function getTrialPeriod(): string
 	{
 		return $this->_getData()->trialDuration.' '.$this->_getData()->trialDurationUnit.' trial';
 	}
