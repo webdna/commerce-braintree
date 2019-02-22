@@ -1,0 +1,5 @@
+
+<input type="hidden" name="gatewayToken" value="{{ gateway.getToken(vault ? currentUser : null) }}" />
+<input type="hidden" name="nonce" value="" />
+<div data-id="dropInUi" {{ gateway.testMode ? 'data-sandbox' }} data-name="{{ storeName ?? siteName }}" data-locale="{{ craft.i18n.getLocaleData().id|replace('-','_') }}" data-threedsecure="{{ threeDSecure }}" data-manage="{{ manage }}"></div>
+
