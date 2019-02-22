@@ -496,7 +496,7 @@ class Gateway extends BaseGateway
 			'price' => $plan->price,
 			'planId' => $plan->reference,
 		];
-		if ((bool)$parameters->prorate) {
+		if (!(bool)$parameters->prorate) {
 			$params['options'] = ['prorateCharges' => false];
 		}
 		//Craft::dd($params);
