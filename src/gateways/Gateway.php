@@ -559,7 +559,7 @@ class Gateway extends BaseGateway
 
 	public function supportsWebhooks(): bool
 	{
-		return true;
+		return false;
 	}
 
 	public function supportsPlanSwitch(): bool

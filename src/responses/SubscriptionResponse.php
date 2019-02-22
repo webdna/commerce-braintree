@@ -56,13 +56,8 @@ class SubscriptionResponse implements SubscriptionResponseInterface
         if (empty($this->data)) {
             return 0;
 		}
-		return (int)$this->data->trialPeriod;
-		$now = new \DateTime();
-		$created = $this->data->createdAt;
-		$diff = $now->diff($created); 
-		return (int)$this->data->trialPeriod - $diff->days;
-		//Craft::dd($diff);
-        //return (int)(($this->data['trial_end'] - $this->data['trial_start']) / 60 / 60 / 24);
+		
+		return (int)$this->data->trialDuration;
     }
     /**
      * @inheritdoc
