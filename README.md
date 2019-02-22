@@ -8,7 +8,6 @@ This plugin provides a [Braintree](https://www.braintreegateway.com) integration
 
 This plugin requires Craft Commerce 2.0.0-alpha.5 or later.
 
-This plugin uses Stripe API version '2018-11-08'.
 
 ## Installation
 
