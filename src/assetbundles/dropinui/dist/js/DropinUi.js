@@ -44,6 +44,7 @@
 				authorization: $token.val(),
 				container: $dropinUi[0],
 				locale: $dropinUi.data('locale'),
+				vaultManager: $dropinUi.data('manage'),
 				card: {
 					cardholderName: {
 						required: true

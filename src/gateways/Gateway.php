@@ -627,6 +627,7 @@ class Gateway extends BaseGateway
 			'paymentForm' => $this->getPaymentFormModel(),
 			'threeDSecure' => false,
 			'vault' => false,
+			'manage' => false,
 		], $params);
 
 		$params['order'] = Commerce::getInstance()->getCarts()->getCart();
