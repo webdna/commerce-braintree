@@ -4,6 +4,15 @@
 
 This plugin provides a [Braintree](https://www.braintreegateway.com) integration for [Craft Commerce](https://craftcms.com/commerce).
 
+## Features
+
+-   Merchant Accounts: supports Braintree's merchant accounts for multiple payment currencies.
+-   Subscriptions: support subscription integration.
+-   DropinUi: Braintree's dropinUi is the default for `getPaymentFromHTML()` method.
+-   Supports 3DSecure.
+-   Supports Paypal, Apple Pay & Google Pay.
+-   Vault: Supports Braintree's vault for securely storing payment details.
+
 ## Requirements
 
 This plugin requires Craft Commerce 2.0.0-alpha.5 or later.
@@ -35,6 +44,7 @@ composer require kuriousagency/commerce-braintree
 ## Setup
 
 To add the Braintree payment gateway, go to Commerce → Settings → Gateways, create a new gateway, and set the gateway type to “Braintree”.
+
 
 ## Payment security enforcement
 
