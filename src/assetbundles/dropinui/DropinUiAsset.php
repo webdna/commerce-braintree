@@ -33,7 +33,7 @@ class DropinUiAsset extends AssetBundle
 		$this->sourcePath = __DIR__.'/dist';
 
         $this->depends = [
-            CpAsset::class,
+            //CpAsset::class,
         ];
 
         $this->js = [

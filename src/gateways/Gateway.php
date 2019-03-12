@@ -47,6 +47,7 @@ use craft\elements\User;
 use craft\helpers\DateTimeHelper;
 use craft\helpers\Json;
 use craft\helpers\StringHelper;
+use craft\helpers\Template as TemplateHelper;
 use craft\helpers\UrlHelper;
 use craft\web\Response as WebResponse;
 use craft\web\View;
@@ -642,7 +643,7 @@ class Gateway extends BaseGateway
 
 		$view->setTemplateMode($previousMode);
 
-		return $html;
+		return TemplateHelper::raw($html);
 	}
 
 	private function isPaid($status)
