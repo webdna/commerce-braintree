@@ -10,9 +10,7 @@
  * @since     1.0.0
  */
 
-
-(function(){
-
+(function() {
 	(function check() {
 		if (typeof braintree !== 'undefined') {
 			init();
@@ -22,9 +20,7 @@
 	})();
 
 	function init() {
-
-		$('form').each(function(){
-
+		$('form').each(function() {
 			var $form = $(this),
 				$token = $form.find('[name="gatewayToken"]'),
 				$nonce = $form.find('[name="nonce"]'),
@@ -34,66 +30,65 @@
 				$submit = $form.find('button[type="submit"]');
 
 			if ($dropinUi[0]) {
-
-			$submit.data('text', $submit.text());
-			if ($submit.data('loading')) {
-				$submit.text($submit.data('lodaing'));
-			}
-
-			var options = {
-				authorization: $token.val(),
-				container: $dropinUi[0],
-				locale: $dropinUi.data('locale'),
-				vaultManager: $dropinUi.data('manage'),
-				card: {
-					cardholderName: {
-						required: true
-					}
-				},
-				paypal: {
-					flow: 'checkout',
-					env: $dropinUi.attr('data-sandbox') ? 'sandbox':'production',
-					amount: $amount.val(),
-					currency: $currency.val(),
-					buttonStyle: {
-						color: 'blue',
-						shape: 'rect',
-						size: 'responsive',
-						label: 'paypal'
-					}
-				},
-				applePay: {
-					displayName: $dropinUi.data('name'),
-					paymentRequest: {
-						total: {
-							label: $dropinUi.data('name'),
-							amount: $amount.val()
-						}
-					}
-				},
-				googlePay: {
-					displayName: $dropinUi.data('name'),
-					paymentRequest: {
-						total: {
-							label: $dropinUi.data('name'),
-							amount: $amount.val()
-						}
-					}
+				$submit.data('text', $submit.text());
+				if ($submit.data('loading')) {
+					$submit.text($submit.data('lodaing'));
 				}
-			};
 
-			if ($dropinUi.data('threedsecure')) {
-				options.threeDSecure = {
-					amount: $amount.val()
+				var options = {
+					authorization: $token.val(),
+					container: $dropinUi[0],
+					locale: $dropinUi.data('locale'),
+					vaultManager: $dropinUi.data('manage'),
+					card: {
+						cardholderName: {
+							required: true
+						}
+					},
+					paypal: {
+						flow: 'checkout',
+						env: $dropinUi.attr('data-sandbox') ? 'sandbox' : 'production',
+						amount: $amount.val(),
+						currency: $currency.val(),
+						buttonStyle: {
+							color: 'blue',
+							shape: 'rect',
+							size: 'responsive',
+							label: 'paypal'
+						}
+					},
+					applePay: {
+						displayName: $dropinUi.data('name'),
+						paymentRequest: {
+							total: {
+								label: $dropinUi.data('name'),
+								amount: $amount.val()
+							}
+						}
+					},
+					googlePay: {
+						displayName: $dropinUi.data('name'),
+						paymentRequest: {
+							total: {
+								label: $dropinUi.data('name'),
+								amount: $amount.val()
+							}
+						}
+					}
 				};
-			}
 
-			braintree.dropin.create(
-				options,
-				function(err, dropinInstance) {
+				if ($dropinUi.data('threedsecure')) {
+					options.threeDSecure = {
+						amount: $amount.val()
+					};
+				}
+
+				braintree.dropin.create(options, function(err, dropinInstance) {
 					if (err) {
 						console.error(err);
-						if (window.braintreeError ) { window.braintreeError(err) }
+						if (window.braintreeError) {
+							window.braintreeError(err);
+						}
 						return;
 					}
 					reset($submit);
@@ -112,12 +107,9 @@
 						//$submit.prop('disabled', false);
 					});
 
-					$form.on('submit', { dropinInstance:dropinInstance, threeDSecure:$dropinUi.data('threedsecure') }, formSubmit);
-
-				}
-			);
+					$form.on('submit', { dropinInstance: dropinInstance, threeDSecure: $dropinUi.data('threedsecure') }, formSubmit);
+				});
 			}
-
 		});
 	}
 
@@ -133,32 +125,36 @@
 		dropinInstance.requestPaymentMethod(function(err, payload) {
 			if (err) {
 				console.error(err);
-				if (window.braintreeError ) { window.braintreeError(err) }
+				if (window.braintreeError) {
+					window.braintreeError(err);
+				}
 				reset($submit);
 				return;
 			}
 			//console.log(payload);
-			if (payload.liabilityShifted || payload.type !== 'CreditCard' || !threeDSecure) {
+			if ((payload.liabilityShiftPossible && payload.liabilityShifted) || !payload.liabilityShiftPossible || payload.type !== 'CreditCard' || !threeDSecure) {
 				processing($submit);
 				$form.find('input[name=nonce]').val(payload.nonce);
 				$form.off('submit', formSubmit);
 				$form.submit();
 			} else {
-				if (window.braintreeError ) { window.braintreeError('3ds failed') }
+				if (window.braintreeError) {
+					window.braintreeError('3ds failed');
+				}
 				//dropinInstance.clearSelectedPaymentMethod();
 				reset($submit);
 				//$submit.prop('disabled', true);
 			}
 		});
-	};
+	}
 	function reset($button) {
 		$button.prop('disabled', false);
 		$button.text($button.data('text'));
-	};
+	}
 	function processing($button) {
 		$button.prop('disabled', true);
 		if ($button.data('processing')) {
 			$button.text($button.data('processing'));
 		}
-	};
+	}
 })();
