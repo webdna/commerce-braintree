@@ -10,7 +10,7 @@
  * @since     1.0.0
  */
 
-(function() {
+(function($) {
 	(function check() {
 		if (typeof braintree !== 'undefined') {
 			init();
@@ -157,4 +157,4 @@
 			$button.text($button.data('processing'));
 		}
 	}
-})();
+})(jQuery);
