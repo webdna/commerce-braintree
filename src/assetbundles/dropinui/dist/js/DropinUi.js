@@ -10,9 +10,10 @@
  * @since     1.0.0
  */
 
-(function($) {
+(function() {
+
 	(function check() {
-		if (typeof braintree !== 'undefined') {
+		if ((typeof braintree !== 'undefined') && (typeof jQuery !== 'undefined')) {
 			init();
 		} else {
 			setTimeout(check, 50);
@@ -20,6 +21,7 @@
 	})();
 
 	function init() {
+
 		$('form').each(function() {
 			var $form = $(this),
 				$token = $form.find('[name="gatewayToken"]'),
@@ -44,8 +46,12 @@
 						cardholderName: {
 							required: true
 						}
-					},
-					paypal: {
+					}
+				};
+
+				if($dropinUi.attr('data-subscription') == false) {
+
+					options.paypal = {
 						flow: 'checkout',
 						env: $dropinUi.attr('data-sandbox') ? 'sandbox' : 'production',
 						amount: $amount.val(),
@@ -56,8 +62,9 @@
 							size: 'responsive',
 							label: 'paypal'
 						}
-					},
-					applePay: {
+					};
+					
+					options.applePay = {
 						displayName: $dropinUi.data('name'),
 						paymentRequest: {
 							total: {
@@ -65,8 +72,9 @@
 								amount: $amount.val()
 							}
 						}
-					},
-					googlePay: {
+					};
+
+					options.googlePay = {
 						displayName: $dropinUi.data('name'),
 						paymentRequest: {
 							total: {
@@ -74,8 +82,8 @@
 								amount: $amount.val()
 							}
 						}
-					}
-				};
+					};
+				}
 
 				if ($dropinUi.data('threedsecure')) {
 					options.threeDSecure = {
@@ -120,7 +128,7 @@
 			$form = $(e.currentTarget),
 			threeDSecure = e.data.threeDSecure,
 			$submit = $form.find('button[type="submit"]');
-		processing($submit);
+			processing($submit);
 
 		dropinInstance.requestPaymentMethod(function(err, payload) {
 			if (err) {
@@ -157,4 +165,4 @@
 			$button.text($button.data('processing'));
 		}
 	}
-})(jQuery);
+})();

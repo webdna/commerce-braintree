@@ -236,25 +236,21 @@ class Gateway extends BaseGateway
 
 			//check for existing paymentSource
 			$sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
-			
-			if (\count($sources) === 0) {
-				$description = Craft::t('commerce-braintree', '{cardType} ending in ••••{last4}', ['cardType' => $response->paymentMethod->cardType, 'last4' => $response->paymentMethod->last4]);
 
-				$paymentSource = new PaymentSource([
-					'userId' => $userId,
-					'gatewayId' => $this->id,
-					'token' => $response->paymentMethod->token,
-					'response' => $response->paymentMethod,
-					'description' => $description,
-				]);
-			} else {
-				foreach ($sources as $source)
-				{
-					if ($source->token === $response->paymentMethod->token) {
-						$paymentSource = $source;
-					}
-				}
-			}
+			// foreach ($sources as $source)
+			// {
+			// 	Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($source->id);
+			// }
+			
+			$description = Craft::t('commerce-braintree', '{cardType} ending in ••••{last4}', ['cardType' => $response->paymentMethod->cardType, 'last4' => $response->paymentMethod->last4]);
+
+			$paymentSource = new PaymentSource([
+				'userId' => $userId,
+				'gatewayId' => $this->id,
+				'token' => $response->paymentMethod->token,
+				'response' => $response->paymentMethod,
+				'description' => $description,
+			]);
 
 			return $paymentSource;
 
@@ -510,10 +506,52 @@ class Gateway extends BaseGateway
 		return new SubscriptionResponse($response->subscription);
 	}
 
+	public function updateSubscriptionPayment(Subscription $subscription, BasePlan $plan,$gateway,$paymentForm)
+	{
 
+		$userId = Craft::$app->getUser()->getId();
+		$description = "";
+
+		$source = Commerce::getInstance()->getPaymentSources()->createPaymentSource($userId, $gateway, $paymentForm, $description);
+
+		$params = [
+			'paymentMethodToken' => $source->token,
+			'price' => $plan->price,
+			'planId' => $plan->reference,
+		];
+
+		$response = $this->gateway->subscription()->update($subscription->reference, $params);
+
+		if (!$response->success) {
+			throw new SubscriptionException(Craft::t('commerce-braintree', 'Unable to unpdate subscription at this time.'));
+		}
+
+		return new SubscriptionResponse($response->subscription);
+
+	}
 
 	public function processWebHook(): WebResponse
 	{
+			
+		$signature = Craft::$app->getRequest()->getRequiredParam('bt_signature');
+		$payload = Craft::$app->getRequest()->getRequiredParam('bt_payload');
+
+		$webhookNotification = $this->gateway->webhookNotification()->parse($signature,$payload);
+
+		switch ($webhookNotification->kind) {
+
+			case 'subscription_canceled':
+			case 'subscription_expired':
+			case 'subscription_went_past_due':
+            	$this->_handleSubscriptionExpired($webhookNotification->subscription);
+				break;
+			case 'subscription_charged_successfully':
+            	$this->_handleSubscriptionCharged($webhookNotification->subscription);
+                break;
+
+		}
+
+        return Craft::$app->end();
 
 	}
 
@@ -559,8 +597,8 @@ class Gateway extends BaseGateway
 	}
 
 	public function supportsWebhooks(): bool
-	{
-		return false;
+	{		
+		return true;
 	}
 
 	public function supportsPlanSwitch(): bool
@@ -629,6 +667,7 @@ class Gateway extends BaseGateway
 			'threeDSecure' => false,
 			'vault' => false,
 			'manage' => false,
+			'subscription' => false,
 		], $params);
 
 		$params['order'] = Commerce::getInstance()->getCarts()->getCart();
@@ -659,4 +698,73 @@ class Gateway extends BaseGateway
 				return false;
 		}
 	}
+
+	 /**
+     * Create a subscription payment model.
+     *
+     * @param $data
+     * @param Currency $currency the currency used for payment
+     *
+     * @return SubscriptionPayment
+     */
+    private function _createSubscriptionPayment($data, Currency $currency): SubscriptionPayment
+    {
+        $payment = new SubscriptionPayment([
+            'paymentAmount' => $data->transactions[0]->amount,
+            'paymentCurrency' => $currency,
+            'paymentDate' => DateTimeHelper::toDateTime($data->createdAt),
+            'paymentReference' => $data->id,
+            'paid' => true,
+            'response' => Json::encode($data)
+        ]);
+
+        return $payment;
+    }
+
+	 /**
+     * Handle an expired subscription.
+     *
+     * @param $data
+     *
+     * @throws \Throwable
+     */
+    private function _handleSubscriptionExpired($data)
+    {
+
+        $subscription = Subscription::find()->reference($data->id)->one();
+
+        if (!$subscription) {
+            Craft::warning('Subscription with the reference “' . $braintreeSubscription->id . '” not found when processing Braintree webhook');
+
+            return;
+        }
+
+        Commerce::getInstance()->getSubscriptions()->expireSubscription($subscription);
+	}
+
+	private function _handleSubscriptionCharged($data)
+	{
+
+		$counter = 0;
+        $limit = 5;
+
+        do {
+            // Handle cases when Braintree sends us a webhook so soon that we haven't processed the subscription that triggered the webhook
+            sleep(1);
+            $subscription = Subscription::find()->reference($data->id)->one();
+            $counter++;
+        } while (!$subscription && $counter < $limit);
+
+
+        if (!$subscription) {
+            throw new SubscriptionException('Subscription with the reference “' . $data->id . '” not found when processing braintree webhook');
+		}
+		
+		$defaultPaymentCurrency = Commerce::getInstance()->getPaymentCurrencies()->getPrimaryPaymentCurrency();
+		$currency = Commerce::getInstance()->getCurrencies()->getCurrencyByIso($defaultPaymentCurrency->iso);
+        $payment = $this->_createSubscriptionPayment($data, $currency);
+
+        Commerce::getInstance()->getSubscriptions()->receivePayment($subscription, $payment, DateTimeHelper::toDateTime($data->nextBillingDate));
+    }
+	
 }

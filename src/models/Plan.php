@@ -62,11 +62,11 @@ class Plan extends BasePlan
 	{
 		return $this->_getData()->trialPeriod;
 	}
+
 	public function getTrialPeriod(): string
 	{
 		return $this->_getData()->trialDuration.' '.$this->_getData()->trialDurationUnit.' trial';
 	}
-
 
 	private function _getData()
 	{
