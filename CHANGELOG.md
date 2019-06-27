@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.1.10 - 2019-06-27
+
+### Added
+
+-   Added support for Craft Commerce 2.1.4 and `craft\commerce\base\SubscriptionResponseInterface::isInactive()`.
+
+
 ## 2.1.9 - 2019-06-18
 
 ### Added

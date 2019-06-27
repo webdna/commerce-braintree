@@ -92,5 +92,14 @@ class SubscriptionResponse implements SubscriptionResponseInterface
 		}
 		return false;
         //return (bool)$this->data['cancel_at_period_end'];
-    }
+	}
+	
+	 /**
+     * @inheritdoc
+     */
+    public function isInactive(): bool
+    {
+        return false;
+	}
+	
 }
