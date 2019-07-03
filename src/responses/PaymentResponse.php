@@ -118,7 +118,8 @@ class PaymentResponse implements RequestResponseInterface
     public function getMessage(): string
     {
 		if (isset($this->data->message) && $this->data->message) {
-			return $this->data->message;
+			//return $this->data->message;
+			return Craft::t('commerce-braintree','There was an issue with your payment method, please check your details and try again. If the issue persists you will need to contact your card provider.');
 		}
 
 		return '';
