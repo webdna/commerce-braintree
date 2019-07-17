@@ -350,9 +350,9 @@ class Gateway extends BaseGateway
 	
 	public function getNextPaymentAmount(Subscription $subscription): string
     {
-		$data = (object)Json::decode($subscription['subscriptionData']);
+		$data = $subscription['subscriptionData'];
 		$currency = Commerce::getInstance()->getCurrencies()->getCurrencyByIso($subscription->plan->currency);
-		return Craft::$app->getFormatter()->asCurrency($data->nextBillingPeriodAmount, $currency);
+		return Craft::$app->getFormatter()->asCurrency($data['nextBillingPeriodAmount'], $currency);
 		//return $data->nextBillingPeriodAmount;
 	}
 
@@ -396,10 +396,10 @@ class Gateway extends BaseGateway
 
 	public function getSubscriptionPayments(Subscription $subscription): array
     {
-		$data = (object)Json::decode($subscription['subscriptionData']);
+		$data = $subscription['subscriptionData'];
 //Craft::dd($data->transactions);
 		$payments = [];
-		foreach ($data->transactions as $transaction)
+		foreach ($data['transactions'] as $transaction)
 		{
 			$payments[] = new SubscriptionPayment([
 				'paymentAmount' => $transaction['amount'],

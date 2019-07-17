@@ -46,7 +46,7 @@ class SubscriptionResponse implements SubscriptionResponseInterface
      */
     public function getData()
     {
-        return $this->data;
+		return json_encode($this->data);
     }
     /**
      * @inheritdoc

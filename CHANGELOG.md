@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Fixed
+
+## 2.1.13 - 2019-07-17
+
+-   Fixed a bug where subscription data was being returned as an object
+
+## 2.1.12 - 2019-07-15
+
+### Changed
+
+-   Updated error message for better error logging
+
 ## 2.1.11 - 2019-07-03
 
 ### Changed
