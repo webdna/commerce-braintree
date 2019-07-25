@@ -286,6 +286,14 @@ class Gateway extends BaseGateway
 			}
 			if (isset($this->merchantAccountId[$transaction->currency])) {
 				$data['merchantAccountId'] = $this->merchantAccountId[$transaction->currency];
+			}			
+			if($form->type != "PayPalAccount") {
+				if($order->billingAddress) {
+					$data['billing'] = $this->_formatAddress($order->billingAddress);
+				}
+				if($order->shippingAddress) {
+					$data['shipping'] = $this->_formatAddress($order->shippingAddress);
+				}
 			}
 
 			$result = $this->gateway->transaction()->sale($data);
@@ -765,6 +773,27 @@ class Gateway extends BaseGateway
         $payment = $this->_createSubscriptionPayment($data, $currency);
 
         Commerce::getInstance()->getSubscriptions()->receivePayment($subscription, $payment, DateTimeHelper::toDateTime($data->nextBillingDate));
-    }
+	}
+	
+	private function _formatAddress($data) {
+
+		$address = [];
+
+		$address = [
+			'firstName' => $data->firstName,
+			'lastName' => $data->lastName,
+			'company' => $data->company,
+			'streetAddress' => $data->address1,
+			'extendedAddress'=> $data->address2,
+			'locality' => $data->city,
+			'region' => $data->stateName,
+			'postalCode' => $data->zipCode,
+			'countryName' => $data->country->name,
+			'countryCodeAlpha2' => $data->country->iso
+		];
+
+		return $address;
+
+	}
 	
 }
