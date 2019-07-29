@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.1.15 - 2019-07-29
+
+## Fixed
+
+-   Fixed a bug in an address with the business name/company 
+
 ## 2.1.14 - 2019-07-25
 
-### Added
+## Added
 
 -   Billing and Shipping addresses now passed to Braintree
 
@@ -18,25 +24,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## 2.1.12 - 2019-07-15
 
-### Changed
+## Changed
 
 -   Updated error message for better error logging
 
 ## 2.1.11 - 2019-07-03
 
-### Changed
+## Changed
 
 -   User friendly error message
 
 ## 2.1.10 - 2019-06-27
 
-### Added
+## Added
 
 -   Added support for Craft Commerce 2.1.4 and `craft\commerce\base\SubscriptionResponseInterface::isInactive()`.
 
 ## 2.1.9 - 2019-06-18
 
-### Added
+## Added
 
 -   Subscription updates
 -   Subscription webhooks support

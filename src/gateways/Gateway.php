@@ -782,7 +782,7 @@ class Gateway extends BaseGateway
 		$address = [
 			'firstName' => $data->firstName,
 			'lastName' => $data->lastName,
-			'company' => $data->company,
+			'company' => $data->businessName,
 			'streetAddress' => $data->address1,
 			'extendedAddress'=> $data->address2,
 			'locality' => $data->city,
