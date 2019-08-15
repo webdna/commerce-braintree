@@ -4,11 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.1.16 - 1029-08-15
+
+### Fixed
+
+-   Paypal when using getPaymentFormHtml() (issue #6)
+
 ## 2.1.15 - 2019-07-29
 
 ## Fixed
 
--   Fixed a bug in an address with the business name/company 
+-   Fixed a bug in an address with the business name/company
 
 ## 2.1.14 - 2019-07-25
 
