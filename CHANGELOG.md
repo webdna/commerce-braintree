@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## 2.1.16 - 1029-08-15
+## 2.1.17 - 2019-08-29
+
+### Fixed
+
+-   Addresses now passing US state abbreviation for paypal requirement.
+
+## 2.1.16 - 1019-08-15
 
 ### Fixed
 
@@ -12,17 +18,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## 2.1.15 - 2019-07-29
 
-## Fixed
+### Fixed
 
 -   Fixed a bug in an address with the business name/company
 
 ## 2.1.14 - 2019-07-25
 
-## Added
+### Added
 
 -   Billing and Shipping addresses now passed to Braintree
 
-## Fixed
+### Fixed
 
 ## 2.1.13 - 2019-07-17
 
@@ -30,48 +36,48 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## 2.1.12 - 2019-07-15
 
-## Changed
+### Changed
 
 -   Updated error message for better error logging
 
 ## 2.1.11 - 2019-07-03
 
-## Changed
+### Changed
 
 -   User friendly error message
 
 ## 2.1.10 - 2019-06-27
 
-## Added
+### Added
 
 -   Added support for Craft Commerce 2.1.4 and `craft\commerce\base\SubscriptionResponseInterface::isInactive()`.
 
 ## 2.1.9 - 2019-06-18
 
-## Added
+### Added
 
 -   Subscription updates
 -   Subscription webhooks support
 
 ## 2.1.8 - 2019-05-29
 
-## Fixed
+### Fixed
 
 -   DropIn UI jQuery reference, thanks @davecosec
 
 ## 2.1.7 - 2019-05-21
 
-## Fixed
+### Fixed
 
 -   multi-currency support
 
 ## 2.1.6 - 2019-03-12
 
-## Changed
+### Changed
 
 -   gateway.getPaymentFormHtml() returns raw by default
 
-## Fixed
+### Fixed
 
 -   rendering issue when using getPaymentFormHtml()
 
