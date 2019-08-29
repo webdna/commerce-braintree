@@ -10,7 +10,7 @@
 		"craft-plugin",
 		"commerce braintree"
 	],
-	"license": "MIT",
+	"license": "proprietary",
 	"authors": [
 		{
 			"name": "Kurious Agency",
