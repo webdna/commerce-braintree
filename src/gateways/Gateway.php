@@ -777,9 +777,11 @@ class Gateway extends BaseGateway
 	
 	private function _formatAddress($data) {
 
-		$address = [];
+		if (!$data) {
+			return [];
+		}
 
-		$address = [
+		return [
 			'firstName' => $data->firstName,
 			'lastName' => $data->lastName,
 			'company' => $data->businessName,
@@ -791,8 +793,6 @@ class Gateway extends BaseGateway
 			'countryName' => $data->country->name,
 			'countryCodeAlpha2' => $data->country->iso
 		];
-
-		return $address;
 
 	}
 	

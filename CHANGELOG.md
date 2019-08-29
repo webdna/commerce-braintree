@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## 2.1.17 - 2019-08-29
+## 2.1.18 - 2019-08-29
+
+### Fixed
+
+-   Don't pass address if no address on order.
+
+## 2.1.17 - 2019-08-19
 
 ### Fixed
 
