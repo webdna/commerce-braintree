@@ -11,17 +11,15 @@
  */
 
 (function() {
-
 	(function check() {
-		if ((typeof braintree !== 'undefined') && (typeof jQuery !== 'undefined')) {
-			init();
+		if (typeof braintree !== 'undefined' && typeof jQuery !== 'undefined') {
+			init(jQuery);
 		} else {
 			setTimeout(check, 50);
 		}
 	})();
 
-	function init() {
-
+	function init($) {
 		$('form').each(function() {
 			var $form = $(this),
 				$token = $form.find('[name="gatewayToken"]'),
@@ -49,8 +47,7 @@
 					}
 				};
 
-				if($dropinUi.attr('data-subscription') == false) {
-
+				if ($dropinUi.attr('data-subscription') == false) {
 					options.paypal = {
 						flow: 'checkout',
 						env: $dropinUi.attr('data-sandbox') ? 'sandbox' : 'production',
@@ -63,7 +60,7 @@
 							label: 'paypal'
 						}
 					};
-					
+
 					options.applePay = {
 						displayName: $dropinUi.data('name'),
 						paymentRequest: {
@@ -128,7 +125,7 @@
 			$form = $(e.currentTarget),
 			threeDSecure = e.data.threeDSecure,
 			$submit = $form.find('button[type="submit"]');
-			processing($submit);
+		processing($submit);
 
 		dropinInstance.requestPaymentMethod(function(err, payload) {
 			if (err) {
