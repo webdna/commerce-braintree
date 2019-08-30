@@ -655,8 +655,8 @@ class Gateway extends BaseGateway
 		$previousMode = $view->getTemplateMode();
 		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-		$view->registerJsFile('https://js.braintreegateway.com/web/3.39.0/js/client.min.js');
-		$view->registerJsFile('https://js.braintreegateway.com/web/3.39.0/js/hosted-fields.min.js');
+		$view->registerJsFile('https://js.braintreegateway.com/web/3.50.1/js/client.min.js');
+		$view->registerJsFile('https://js.braintreegateway.com/web/3.50.1/js/hosted-fields.min.js');
 		$view->registerAssetBundle(HostedFieldsAsset::class);
 		$html = $view->renderTemplate('commerce-braintree/paymentForms/hosted-fields', $params);
 
@@ -684,7 +684,7 @@ class Gateway extends BaseGateway
 		$previousMode = $view->getTemplateMode();
 		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-		$view->registerJsFile('https://js.braintreegateway.com/web/dropin/1.13.0/js/dropin.min.js');
+		$view->registerJsFile('https://js.braintreegateway.com/web/dropin/1.20.0/js/dropin.min.js');
 		$view->registerAssetBundle(DropinUiAsset::class);
 		$html = $view->renderTemplate('commerce-braintree/paymentForms/dropin-ui', $params);
 
