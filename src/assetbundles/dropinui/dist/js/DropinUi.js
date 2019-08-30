@@ -85,11 +85,7 @@
 				}
 
 				if ($dropinUi.data('threedsecure')) {
-					options.threeDSecure = {
-						amount: amount,
-						email: email,
-						billingAddress: address
-					};
+					options.threeDSecure = true;
 				}
 
 				braintree.dropin.create(options, function(err, dropinInstance) {
@@ -128,33 +124,45 @@
 		var dropinInstance = e.data.dropinInstance,
 			$form = $(e.currentTarget),
 			threeDSecure = e.data.threeDSecure,
-			$submit = $form.find('button[type="submit"]');
+			$submit = $form.find('button[type="submit"]'),
+			amount = $form.find('[name="amount"]').val(),
+			email = $form.find('[name="email"]').val(),
+			address = JSON.parse($form.find('[name="address"]').val());
 		processing($submit);
 
-		dropinInstance.requestPaymentMethod(function(err, payload) {
-			if (err) {
-				console.error(err);
-				if (window.braintreeError) {
-					window.braintreeError(err);
+		dropinInstance.requestPaymentMethod(
+			{
+				threeDSecure: {
+					amount: amount,
+					email: email,
+					billingAddress: address
 				}
-				reset($submit);
-				return;
-			}
-			//console.log(payload);
-			if ((payload.liabilityShiftPossible && payload.liabilityShifted) || !payload.liabilityShiftPossible || payload.type !== 'CreditCard' || !threeDSecure) {
-				processing($submit);
-				$form.find('input[name=nonce]').val(payload.nonce);
-				$form.off('submit', formSubmit);
-				$form.submit();
-			} else {
-				if (window.braintreeError) {
-					window.braintreeError('3ds failed');
+			},
+			function(err, payload) {
+				if (err) {
+					console.error(err);
+					if (window.braintreeError) {
+						window.braintreeError(err);
+					}
+					reset($submit);
+					return;
 				}
-				//dropinInstance.clearSelectedPaymentMethod();
-				reset($submit);
-				//$submit.prop('disabled', true);
+				//console.log(payload);
+				if ((payload.liabilityShiftPossible && payload.liabilityShifted) || !payload.liabilityShiftPossible || payload.type !== 'CreditCard' || !threeDSecure) {
+					processing($submit);
+					$form.find('input[name=nonce]').val(payload.nonce);
+					$form.off('submit', formSubmit);
+					$form.submit();
+				} else {
+					if (window.braintreeError) {
+						window.braintreeError('3ds failed');
+					}
+					//dropinInstance.clearSelectedPaymentMethod();
+					reset($submit);
+					//$submit.prop('disabled', true);
+				}
 			}
-		});
+		);
 	}
 	function reset($button) {
 		$button.prop('disabled', false);
