@@ -27,7 +27,7 @@
 				amount = $form.find('[name="amount"]').val(),
 				currency = $form.find('[name="currency"]').val(),
 				email = $form.find('[name="email"]').val(),
-				address = $form.find('[name="address"]').val(),
+				address = JSON.parse($form.find('[name="address"]').val()),
 				$dropinUi = $form.find('[data-id="dropInUi"]'),
 				$submit = $form.find('button[type="submit"]');
 
