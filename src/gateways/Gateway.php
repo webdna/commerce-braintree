@@ -289,7 +289,7 @@ class Gateway extends BaseGateway
 			}			
 			if($form->type != "PayPalAccount") {
 				if($order->billingAddress || $order->shippingAddress) {
-					$data['billing'] = $this->_formatAddress($order->billingAddress ?: $order->shippingAddress);
+					$data['billing'] = $this->_formatAddress($order->billingAddress ?? $order->shippingAddress);
 				}
 				if($order->shippingAddress) {
 					$data['shipping'] = $this->_formatAddress($order->shippingAddress);
@@ -801,7 +801,7 @@ class Gateway extends BaseGateway
 		if (get_class($order) == 'craft\\commerce\\models\\Address') {
 			$address = $order;
 		} else {
-			$address = $order->billingAddress ?: $order->shippingAddress;
+			$address = $order->billingAddress ?? $order->shippingAddress;
 		}
 		
 		return [
