@@ -289,7 +289,7 @@ class Gateway extends BaseGateway
 			}			
 			if($form->type != "PayPalAccount") {
 				if($order->billingAddress || $order->shippingAddress) {
-					$data['billing'] = $this->_formatAddress($order->billingAddress || $order->shippingAddress);
+					$data['billing'] = $this->_formatAddress($order->billingAddress ?? $order->shippingAddress);
 				}
 				if($order->shippingAddress) {
 					$data['shipping'] = $this->_formatAddress($order->shippingAddress);
@@ -798,12 +798,12 @@ class Gateway extends BaseGateway
 
 	public function format3DSAddress($order)
 	{
-		$address = $order->billingAddress || $order->shippingAddress;
+		$address = $order->billingAddress ?? $order->shippingAddress;
 		
 		return [
 			'givenName' => $address->firstName,
 			'surname' => $address->lastName,
-			'phoneNumber' => preg_replace('/[()\s-]/g', '', $address->phone),
+			'phoneNumber' => preg_replace('/[()\s-]/', '', $address->phone),
 			'streetAddress' => $address->address1,
 			'extendedAddress' => $address->address2,
 			'locality' => $address->city,
