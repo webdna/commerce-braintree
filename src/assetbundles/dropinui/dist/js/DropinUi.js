@@ -112,7 +112,21 @@
 						//$submit.prop('disabled', false);
 					});
 
-					$form.on('submit', { dropinInstance: dropinInstance, threeDSecure: $dropinUi.data('threedsecure') }, formSubmit);
+					$form.on(
+						'submit',
+						{
+							dropinInstance: dropinInstance,
+							threeDSecure: $dropinUi.data('threedsecure'),
+							options: {
+								threeDSecure: {
+									amount: amount,
+									email: email,
+									billingAddress: address
+								}
+							}
+						},
+						formSubmit
+					);
 				});
 			}
 		});
@@ -124,45 +138,33 @@
 		var dropinInstance = e.data.dropinInstance,
 			$form = $(e.currentTarget),
 			threeDSecure = e.data.threeDSecure,
-			$submit = $form.find('button[type="submit"]'),
-			amount = $form.find('[name="amount"]').val(),
-			email = $form.find('[name="email"]').val(),
-			address = JSON.parse($form.find('[name="address"]').val());
+			$submit = $form.find('button[type="submit"]');
 		processing($submit);
 
-		dropinInstance.requestPaymentMethod(
-			{
-				threeDSecure: {
-					amount: amount,
-					email: email,
-					billingAddress: address
+		dropinInstance.requestPaymentMethod(threeDSecure ? e.data.options : {}, function(err, payload) {
+			if (err) {
+				console.error(err);
+				if (window.braintreeError) {
+					window.braintreeError(err);
 				}
-			},
-			function(err, payload) {
-				if (err) {
-					console.error(err);
-					if (window.braintreeError) {
-						window.braintreeError(err);
-					}
-					reset($submit);
-					return;
-				}
-				//console.log(payload);
-				if ((payload.liabilityShiftPossible && payload.liabilityShifted) || !payload.liabilityShiftPossible || payload.type !== 'CreditCard' || !threeDSecure) {
-					processing($submit);
-					$form.find('input[name=nonce]').val(payload.nonce);
-					$form.off('submit', formSubmit);
-					$form.submit();
-				} else {
-					if (window.braintreeError) {
-						window.braintreeError('3ds failed');
-					}
-					//dropinInstance.clearSelectedPaymentMethod();
-					reset($submit);
-					//$submit.prop('disabled', true);
-				}
+				reset($submit);
+				return;
 			}
-		);
+			//console.log(payload);
+			if ((payload.liabilityShiftPossible && payload.liabilityShifted) || !payload.liabilityShiftPossible || payload.type !== 'CreditCard' || !threeDSecure) {
+				processing($submit);
+				$form.find('input[name=nonce]').val(payload.nonce);
+				$form.off('submit', formSubmit);
+				$form.submit();
+			} else {
+				if (window.braintreeError) {
+					window.braintreeError('3ds failed');
+				}
+				//dropinInstance.clearSelectedPaymentMethod();
+				reset($submit);
+				//$submit.prop('disabled', true);
+			}
+		});
 	}
 	function reset($button) {
 		$button.prop('disabled', false);
