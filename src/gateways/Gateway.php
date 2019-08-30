@@ -794,7 +794,7 @@ class Gateway extends BaseGateway
 			'streetAddress' => $data->address1,
 			'extendedAddress'=> $data->address2,
 			'locality' => $data->city,
-			'region' => ($address->state && $data->country->iso == 'US') ? $data->state->abbreviation : $data->stateName,
+			'region' => ($data->state && $data->country->iso == 'US') ? $data->state->abbreviation : $data->stateName,
 			'postalCode' => $data->zipCode,
 			'countryName' => $data->country->name,
 			'countryCodeAlpha2' => $data->country->iso
