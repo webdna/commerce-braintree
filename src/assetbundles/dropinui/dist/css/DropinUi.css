@@ -9,3 +9,14 @@
  * @package   CommerceBraintree
  * @since     1.0.0
  */
+
+#Cardinal-Modal {
+	top: 50% !important;
+	left: 50% !important;
+	bottom: unset !important;
+	right: unset !important;
+	transform: translate(-50%, -50%) !important;
+}
+#Cardinal-Modal iframe {
+	width: 390px !important;
+}

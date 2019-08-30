@@ -288,8 +288,8 @@ class Gateway extends BaseGateway
 				$data['merchantAccountId'] = $this->merchantAccountId[$transaction->currency];
 			}			
 			if($form->type != "PayPalAccount") {
-				if($order->billingAddress) {
-					$data['billing'] = $this->_formatAddress($order->billingAddress);
+				if($order->billingAddress || $order->shippingAddress) {
+					$data['billing'] = $this->_formatAddress($order->billingAddress || $order->shippingAddress);
 				}
 				if($order->shippingAddress) {
 					$data['shipping'] = $this->_formatAddress($order->shippingAddress);
@@ -794,6 +794,23 @@ class Gateway extends BaseGateway
 			'countryCodeAlpha2' => $data->country->iso
 		];
 
+	}
+
+	public function format3DSAddress($order)
+	{
+		$address = $order->billingAddress || $order->shippingAddress;
+		
+		return [
+			'givenName' => $address->firstName,
+			'surname' => $address->lastName,
+			'phoneNumber' => preg_replace('/[()\s-]/g', '', $address->phone),
+			'streetAddress' => $address->address1,
+			'extendedAddress' => $address->address2,
+			'locality' => $address->city,
+			'region' => $address->state ? $address->state->abbreviation : $address->stateName,
+			'postalCode' => $address->zipCode,
+			'countryCodeAlpha2' => $address->country->iso,
+		];
 	}
 	
 }

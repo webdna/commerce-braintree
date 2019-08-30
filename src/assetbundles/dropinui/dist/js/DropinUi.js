@@ -24,8 +24,10 @@
 			var $form = $(this),
 				$token = $form.find('[name="gatewayToken"]'),
 				$nonce = $form.find('[name="nonce"]'),
-				$amount = $form.find('[name="amount"]'),
-				$currency = $form.find('[name="currency"]'),
+				amount = $form.find('[name="amount"]').val(),
+				currency = $form.find('[name="currency"]').val(),
+				email = $form.find('[name="email"]').val(),
+				address = $form.find('[name="address"]').val(),
 				$dropinUi = $form.find('[data-id="dropInUi"]'),
 				$submit = $form.find('button[type="submit"]');
 
@@ -51,8 +53,8 @@
 					options.paypal = {
 						flow: 'checkout',
 						env: $dropinUi.attr('data-sandbox') ? 'sandbox' : 'production',
-						amount: $amount.val(),
-						currency: $currency.val(),
+						amount: amount,
+						currency: currency,
 						buttonStyle: {
 							color: 'blue',
 							shape: 'rect',
@@ -66,7 +68,7 @@
 						paymentRequest: {
 							total: {
 								label: $dropinUi.data('name'),
-								amount: $amount.val()
+								amount: amount
 							}
 						}
 					};
@@ -76,7 +78,7 @@
 						paymentRequest: {
 							total: {
 								label: $dropinUi.data('name'),
-								amount: $amount.val()
+								amount: amount
 							}
 						}
 					};
@@ -84,7 +86,9 @@
 
 				if ($dropinUi.data('threedsecure')) {
 					options.threeDSecure = {
-						amount: $amount.val()
+						amount: amount,
+						email: email,
+						billingAddress: address
 					};
 				}
 

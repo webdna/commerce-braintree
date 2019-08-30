@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## 2.1.19 - unreleased
 
+### Added
+
+-   3DS2 support
+
 ### Changed
 
 -   DropinUi Javascript jQuery object is now passed into init function.
