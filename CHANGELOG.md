@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.1.19 - unreleased
+
+### Changed
+
+-   DropinUi Javascript jQuery object is now passed into init function.
+
 ## 2.1.18 - 2019-08-29
 
 ### Fixed
