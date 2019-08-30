@@ -678,7 +678,13 @@ class Gateway extends BaseGateway
 			'subscription' => false,
 		], $params);
 
-		$params['order'] = Commerce::getInstance()->getCarts()->getCart();
+		$orderId = $request->getParam('number');
+		if ($orderId) {
+			$order = Commerce::getInstance()->getOrders()->getOrderByNumber($orderId);
+		} else {
+			$order = Commerce::getInstance()->getCarts()->getCart();
+		}
+		$params['order'] = $order;
 
 		$view = Craft::$app->getView();
 		$previousMode = $view->getTemplateMode();
