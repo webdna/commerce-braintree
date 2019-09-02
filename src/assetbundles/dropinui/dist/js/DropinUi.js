@@ -27,7 +27,7 @@
 				amount = $form.find('[name="amount"]').val(),
 				currency = $form.find('[name="currency"]').val(),
 				email = $form.find('[name="email"]').val(),
-				address = JSON.parse($form.find('[name="address"]').val()),
+				address = $form.find('[name="address"]').val(),
 				$dropinUi = $form.find('[data-id="dropInUi"]'),
 				$submit = $form.find('button[type="submit"]');
 
@@ -121,7 +121,7 @@
 								threeDSecure: {
 									amount: amount,
 									email: email,
-									billingAddress: address
+									billingAddress: address ? JSON.parse(address) : address
 								}
 							}
 						},
