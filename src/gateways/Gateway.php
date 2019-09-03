@@ -809,6 +809,10 @@ class Gateway extends BaseGateway
 		} else {
 			$address = $order->billingAddress ?: $order->shippingAddress;
 		}
+
+		if (!$address) {
+			return [];
+		}
 		
 		return [
 			'givenName' => $address->firstName,
