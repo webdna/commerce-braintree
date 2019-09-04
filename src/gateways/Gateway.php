@@ -794,10 +794,10 @@ class Gateway extends BaseGateway
 			'streetAddress' => $data->address1,
 			'extendedAddress'=> $data->address2,
 			'locality' => $data->city,
-			'region' => ($data->state && $data->country->iso == 'US') ? $data->state->abbreviation : $data->stateName,
+			'region' => ($data->state && $data->country && $data->country->iso == 'US') ? $data->state->abbreviation : $data->stateName,
 			'postalCode' => $data->zipCode,
-			'countryName' => $data->country->name,
-			'countryCodeAlpha2' => $data->country->iso
+			'countryName' => $data->country ? $data->country->name : '',
+			'countryCodeAlpha2' => $data->country ? $data->country->iso : ''
 		];
 
 	}
@@ -823,7 +823,7 @@ class Gateway extends BaseGateway
 			'locality' => $address->city,
 			'region' => $address->state ? $address->state->abbreviation : $address->stateName,
 			'postalCode' => $address->zipCode,
-			'countryCodeAlpha2' => $address->country->iso,
+			'countryCodeAlpha2' => $data->country ? $data->country->iso : ''
 		];
 	}
 	
