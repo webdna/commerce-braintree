@@ -34,7 +34,7 @@
 			if ($dropinUi[0]) {
 				$submit.data('text', $submit.text());
 				if ($submit.data('loading')) {
-					$submit.text($submit.data('lodaing'));
+					$submit.text($submit.data('loading'));
 				}
 
 				var options = {

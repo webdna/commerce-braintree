@@ -99,9 +99,9 @@ class Gateway extends BaseGateway
 
 		$this->gateway = new Braintree\Gateway([
 			'environment' => $this->testMode ? 'sandbox' : 'production',
-			'merchantId' => $this->merchantId,
-			'publicKey' => $this->publicKey,
-			'privateKey' => $this->privateKey
+			'merchantId' => Craft::parseEnv($this->merchantId),
+			'publicKey' => Craft::parseEnv($this->publicKey),
+			'privateKey' => Craft::parseEnv($this->privateKey)
 		]);
 	}
 	
@@ -133,7 +133,7 @@ class Gateway extends BaseGateway
 		//$omnipayGateway = $this->createGateway();
 		$params = [];
 		if ($currency) {
-			$params['merchantAccountId'] = $this->merchantAccountId[$currency];
+			$params['merchantAccountId'] = Craft::parseEnv($this->merchantAccountId[$currency]);
 		}
 		if ($user) {
 			try {

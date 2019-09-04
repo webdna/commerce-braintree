@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 -   address formatting to cater for no country
 
+### Added
+
+-   autosuggestField support for environment settings
+
 ## 2.2.0 - 2019-09-03
 
 ### Added

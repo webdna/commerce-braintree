@@ -13,33 +13,36 @@
  */
 #}
 
-{% from "_includes/forms" import textField, lightswitchField %}
+{% from "_includes/forms" import autosuggestField, lightswitchField %}
 
-{{ textField({
+{{ autosuggestField({
     label: 'Merchant Id'|t('commerce'),
     id: 'merchantId',
     class: 'ltr',
     name: 'merchantId',
     value: gateway.merchantId,
-    errors: gateway.getErrors('merchantId')
+    errors: gateway.getErrors('merchantId').
+	suggestEnvVars: true
 }) }}
 
-{{ textField({
+{{ autosuggestField({
     label: 'Public Key'|t('commerce'),
     id: 'publicKey',
     class: 'ltr',
     name: 'publicKey',
     value: gateway.publicKey,
-    errors: gateway.getErrors('publicKey')
+    errors: gateway.getErrors('publicKey'),
+	suggestEnvVars: true
 }) }}
 
-{{ textField({
+{{ autosuggestField({
     label: 'Private Key'|t('commerce'),
     id: 'privateKey',
     class: 'ltr',
     name: 'privateKey',
     value: gateway.privateKey,
-    errors: gateway.getErrors('privateKey')
+    errors: gateway.getErrors('privateKey'),
+	suggestEnvVars: true
 }) }}
 
 
@@ -56,11 +59,12 @@
 {% if currencies|length > 1 %}
 <hr>
 {% for currency in currencies %}
-{{ textField({
+{{ autosuggestField({
     label: currency.iso~' Merchant Account Id'|t('commerce'),
     class: 'ltr',
     name: 'merchantAccountId['~currency.iso~']',
     value: gateway.merchantAccountId[currency.iso] ?? null,
+	suggestEnvVars: true
 }) }}
 {% endfor %}
 {% endif %}
