@@ -823,7 +823,7 @@ class Gateway extends BaseGateway
 			'locality' => $address->city,
 			'region' => $address->state ? $address->state->abbreviation : $address->stateName,
 			'postalCode' => $address->zipCode,
-			'countryCodeAlpha2' => $data->country ? $data->country->iso : ''
+			'countryCodeAlpha2' => $address->country ? $address->country->iso : ''
 		];
 	}
 	
