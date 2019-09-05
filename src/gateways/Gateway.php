@@ -181,7 +181,11 @@ class Gateway extends BaseGateway
 	public function getCustomer($user)
 	{
 		if (!$this->customer) {
-			$this->customer = $this->gateway->customer()->find($user->uid);
+			try {
+				$this->customer = $this->gateway->customer()->find($user->uid);
+			} catch (\Throwable $exception) {
+				return null;
+			}
 		}
 		return $this->customer;
 	}
@@ -276,9 +280,29 @@ class Gateway extends BaseGateway
 			$order = $transaction->getOrder();
 			$data = [
 				'amount' => $transaction->paymentAmount,
-				'orderId' => $order->reference,
+				'orderId' => $order->shortNumber,
 				'options' => [ 'submitForSettlement' => true ]
 			];
+
+			if ($order->user) {
+				if ($this->getCustomer($order->user)) {
+					$data['customerId'] = $order->user->uid;
+				} else {
+					$data['customer'] = [
+						'firstName' => $order->user->firstName,
+						'lastName' => $order->user->lastName,
+						'email' => $order->email,
+					];
+				}
+			} else {
+				$data['customer'] = [
+					'email' => $order->email,
+				];
+			}
+
+			// deviceData
+
+
 			if ($form->nonce) {
 				$data['paymentMethodNonce'] = $form->nonce;
 			} elseif ($form->token) {
