@@ -750,7 +750,7 @@ class Gateway extends BaseGateway
         $payment = new SubscriptionPayment([
             'paymentAmount' => $data->transactions[0]->amount,
             'paymentCurrency' => $currency,
-            'paymentDate' => DateTimeHelper::toDateTime($data->createdAt),
+            'paymentDate' => $data->createdAt,
             'paymentReference' => $data->id,
             'paid' => true,
             'response' => Json::encode($data)
@@ -802,7 +802,7 @@ class Gateway extends BaseGateway
 		$currency = Commerce::getInstance()->getCurrencies()->getCurrencyByIso($defaultPaymentCurrency->iso);
         $payment = $this->_createSubscriptionPayment($data, $currency);
 
-        Commerce::getInstance()->getSubscriptions()->receivePayment($subscription, $payment, DateTimeHelper::toDateTime($data->nextBillingDate));
+        Commerce::getInstance()->getSubscriptions()->receivePayment($subscription, $payment, $data->nextBillingDate);
 	}
 	
 	private function _formatAddress($data) {

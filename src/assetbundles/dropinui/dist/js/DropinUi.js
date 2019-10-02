@@ -96,7 +96,6 @@
 						}
 						return;
 					}
-					reset($submit);
 
 					if (dropinInstance.isPaymentMethodRequestable()) {
 						reset($submit);
