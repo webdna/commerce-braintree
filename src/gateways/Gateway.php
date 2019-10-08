@@ -308,9 +308,13 @@ class Gateway extends BaseGateway
 			} elseif ($form->token) {
 				$data['paymentMethodToken'] = $form->token;
 			}
-			if (isset($this->merchantAccountId[$transaction->currency])) {
-				$data['merchantAccountId'] = $this->merchantAccountId[$transaction->currency];
-			}			
+            if (isset($this->merchantAccountId[$transaction->paymentCurrency]) && !empty($this->merchantAccountId[$transaction->paymentCurrency])) {
+                $data['merchantAccountId'] = $this->merchantAccountId[$transaction->paymentCurrency];
+                $data['amount'] = $transaction->paymentAmount;
+            } else {
+                $data['merchantAccountId'] = "";
+                $data['amount'] = $transaction->amount;
+            }
 			if($form->type != "PayPalAccount") {
 				if($order->billingAddress || $order->shippingAddress) {
 					$data['billing'] = $this->_formatAddress($order->billingAddress ?: $order->shippingAddress);
