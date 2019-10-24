@@ -548,6 +548,30 @@ class Gateway extends BaseGateway
         return new SubscriptionResponse($response->subscription);
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function getHasBillingIssues(Subscription $subscription): bool
+    {
+        throw new NotSupportedException();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getBillingIssueDescription(Subscription $subscription): string
+    {
+        throw new NotSupportedException();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getBillingIssueResolveFormHtml(Subscription $subscription): string
+    {
+        throw new NotSupportedException();
+    }
+
     public function processWebHook(): WebResponse
     {
         $signature = Craft::$app->getRequest()->getRequiredParam('bt_signature');
