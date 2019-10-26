@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.2.5 - 2019-10-26
+
+### Changed
+
+-   Craft Commerce 2.2 compatability update
+
 ## 2.2.4 - 2019-10-02
 
 ### Fixed
