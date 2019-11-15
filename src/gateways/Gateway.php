@@ -340,19 +340,33 @@ class Gateway extends BaseGateway
         }
     }
 
-
     // Subscriptions
-
-    public function cancelSubscription(Subscription $subscription, BaseCancelSubscriptionForm $parameters): SubscriptionResponseInterface
+	public function cancelSubscription(Subscription $subscription, BaseCancelSubscriptionForm $parameters): SubscriptionResponseInterface
     {
-        try {
-            $response = $this->gateway->subscription()->cancel($subscription->reference);
-            
-            return new SubscriptionResponse($response->subscription);
-        } catch (\Throwable $exception) {
-            throw new SubscriptionException('Failed to cancel subscription: ' . $exception->getMessage());
-        }
-    }
+		
+		$response = $this->gateway->subscription()->cancel($subscription->reference);
+
+		if($response->success) {
+			return new SubscriptionResponse($response->subscription);
+		} else {
+
+			foreach($response->errors->forKey('subscription')->shallowAll() AS $error) {
+				// subscription has already been cancelled on Braintree but not in the site. So let's cancel on site as well
+				if($error->code == "81905") {
+					try {
+						$response = $this->gateway->subscription()->find($subscription->reference);
+					} catch (Braintree_Exception_NotFound $e) {
+						throw new SubscriptionException('Failed to cancel subscription: ' . $subscription->reference . ". Error:" . $e->getMessage());
+					}
+
+					return new SubscriptionResponse($response);
+				}
+			}
+
+			throw new SubscriptionException('Failed to cancel subscription: ' . $subscription->reference);
+		}
+		
+	}
 
     public function getCancelSubscriptionFormHtml(Subscription $subscription): string
     {
@@ -778,7 +792,7 @@ class Gateway extends BaseGateway
         $subscription = Subscription::find()->reference($data->id)->one();
 
         if (!$subscription) {
-            Craft::warning('Subscription with the reference “' . $braintreeSubscription->id . '” not found when processing Braintree webhook');
+            Craft::warning('Subscription with the reference “' . $subscription->id . '” not found when processing Braintree webhook');
 
             return;
         }
