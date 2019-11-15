@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Fixed
 
--   Fixed a bug that could occur if a susbcrption was cancelled directly in Braintree and not via the CP
+-   Fixed a bug that could occur if a susbcrption was cancelled directly in Braintree.
 
 ## 2.2.5 - 2019-10-26
 
