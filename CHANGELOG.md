@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.2.7 - 2019-11-19
+
+### Fixed
+
+-   A bug where subscriptions were not being created when the currency plan was different to the default currency in Braintree
+
 ## 2.2.6 - 2019-11-15
 
 ### Fixed

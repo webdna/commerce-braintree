@@ -492,7 +492,8 @@ class Gateway extends BaseGateway
         $response = (object)$this->gateway->subscription()->create([
             'paymentMethodToken' => $source->token,
             'planId' => $plan->reference,
-            'price' => $plan->price,
+			'price' => $plan->price,
+			'merchantAccountId' => $this->merchantAccountId[$plan->getCurrency()],
         ]);
 
         if (!$response->success) {
