@@ -73,7 +73,7 @@ gateway.getPaymentFormHtml({storeName:'My WebSite'})
 This will allow the setting of the dropinUi translations: [Examples](https://github.com/braintree/braintree-web-drop-in/blob/master/src/translations/en_US.js)
 
 ```
-gateway.getPaymentFormHtml({trabslations:{chooseAWayToPay:'Choose a way to pay'}})
+gateway.getPaymentFormHtml({translations:{chooseAWayToPay:'Choose a way to pay'}})
 ```
 
 ### Vault
