@@ -68,6 +68,14 @@ This will set the store name for paypal, google pay & apple pay. Default: siteNa
 gateway.getPaymentFormHtml({storeName:'My WebSite'})
 ```
 
+### Translations
+
+This will allow the setting of the dropinUi translations: [Examples](https://github.com/braintree/braintree-web-drop-in/blob/master/src/translations/en_US.js)
+
+```
+gateway.getPaymentFormHtml({trabslations:{chooseAWayToPay:'Choose a way to pay'}})
+```
+
 ### Vault
 
 This allows the payment details to be store in Braintree's Vault, not the website. The DropinUi will display all saved payment methods. Default: false

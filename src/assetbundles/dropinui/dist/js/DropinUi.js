@@ -48,6 +48,9 @@
 						}
 					}
 				};
+				if ($dropinUi.attr('data-translations') != '') {
+					options.translations = JSON.parse($dropinUi.attr('data-translations'));
+				}
 
 				if ($dropinUi.attr('data-subscription') == false) {
 					options.paypal = {
@@ -154,7 +157,7 @@
 				processing($submit);
 				$form.find('input[name=nonce]').val(payload.nonce);
 				$form.off('submit', formSubmit);
-				$form.submit();
+				$form.trigger('submit');
 			} else {
 				if (window.braintreeError) {
 					window.braintreeError('3ds failed');

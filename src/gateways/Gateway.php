@@ -303,9 +303,12 @@ class Gateway extends BaseGateway
             } elseif ($form->token) {
                 $data['paymentMethodToken'] = $form->token;
             }
-            if (isset($this->merchantAccountId[$transaction->currency])) {
-                $data['merchantAccountId'] = $this->merchantAccountId[$transaction->currency];
-            }
+            if (isset($this->merchantAccountId[$transaction->currency]) && !empty($this->merchantAccountId[$transaction->currency])) {
+				$data['merchantAccountId'] = $this->merchantAccountId[$transaction->currency];
+			} else {
+				$data['merchantAccountId'] = "";
+				$data['amount'] = $transaction->amount;
+			}
             if ($form->type != "PayPalAccount") {
                 if ($order->billingAddress || $order->shippingAddress) {
                     $data['billing'] = $this->_formatAddress($order->billingAddress ?: $order->shippingAddress);
@@ -737,9 +740,9 @@ class Gateway extends BaseGateway
         $previousMode = $view->getTemplateMode();
         $view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-        $view->registerJsFile('https://js.braintreegateway.com/web/dropin/1.20.1/js/dropin.min.js');
-        $view->registerAssetBundle(DropinUiAsset::class);
-        $html = $view->renderTemplate('commerce-braintree/paymentForms/dropin-ui', $params);
+		$view->registerJsFile('https://js.braintreegateway.com/web/dropin/1.21.0/js/dropin.min.js');
+		$view->registerAssetBundle(DropinUiAsset::class);
+		$html = $view->renderTemplate('commerce-braintree/paymentForms/dropin-ui', $params);
 
         $view->setTemplateMode($previousMode);
 
@@ -824,25 +827,26 @@ class Gateway extends BaseGateway
 
         Commerce::getInstance()->getSubscriptions()->receivePayment($subscription, $payment, $data->nextBillingDate);
     }
-    
-    private function _formatAddress($data)
-    {
-        if (!$data) {
-            return [];
-        }
+	
+	private function _formatAddress($data) {
 
-        return [
-            'firstName' => $data->firstName,
-            'lastName' => $data->lastName,
-            'company' => $data->businessName,
-            'streetAddress' => $data->address1,
-            'extendedAddress'=> $data->address2,
-            'locality' => $data->city,
-            'region' => ($data->state && $data->country && $data->country->iso == 'US') ? $data->state->abbreviation : $data->stateName,
-            'postalCode' => $data->zipCode,
-            'countryName' => $data->country ? $data->country->name : '',
-            'countryCodeAlpha2' => $data->country ? $data->country->iso : ''
-        ];
+		if (!$data) {
+			return [];
+		}
+
+		return [
+			'firstName' => $data->firstName,
+			'lastName' => $data->lastName,
+			'company' => $data->businessName,
+			'streetAddress' => $data->address1,
+			'extendedAddress'=> $data->address2,
+			'locality' => $data->city,
+			'region' => ($data->state && $data->country && $data->country->iso == 'US') ? $data->state->abbreviation : $data->stateName,
+			'postalCode' => $data->zipCode,
+			//'countryName' => $data->country ? $data->country->name : '',
+			'countryCodeAlpha2' => $data->country ? $data->country->iso : ''
+		];
+
     }
 
     public function format3DSAddress($order)

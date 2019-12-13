@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.3.0 - 2019-12-13
+
+### Changed
+
+-	Update Braintree PHP SDK to 4.5.0
+-	Updated dropinUi js to 1.21.0
+-	dropinUi form submission to be $form.trigger('submit')
+-	removed country name from billing and shipping addresses, now just uses the ISO2 code
+
+### Added
+
+-	DropinUi translations.
+
 ## 2.2.7 - 2019-11-19
 
 ### Fixed
