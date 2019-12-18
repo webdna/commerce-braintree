@@ -4,18 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.3.1 - 2019-12-18
+
+### Fixed
+
+-   subscription detail page throwing error
+
+### Changed
+
+-   Cancelling a subscription now deletes the payment source if not being used by another active subscription.
+
+### Added
+
+-   deletePaymentMethod(\$token)
+
 ## 2.3.0 - 2019-12-13
 
 ### Changed
 
--	Update Braintree PHP SDK to 4.5.0
--	Updated dropinUi js to 1.21.0
--	dropinUi form submission to be $form.trigger('submit')
--	removed country name from billing and shipping addresses, now just uses the ISO2 code
+-   Update Braintree PHP SDK to 4.5.0
+-   Updated dropinUi js to 1.21.0
+-   dropinUi form submission to be \$form.trigger('submit')
+-   removed country name from billing and shipping addresses, now just uses the ISO2 code
 
 ### Added
 
--	DropinUi translations.
+-   DropinUi translations.
 
 ## 2.2.7 - 2019-11-19
 
@@ -39,7 +53,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Fixed
 
--   Fixed date bug in _handleSubscriptionCharged method
+-   Fixed date bug in \_handleSubscriptionCharged method
 -   Fixed deprecation warning for locale in DropinUi template
 
 ### Changed
