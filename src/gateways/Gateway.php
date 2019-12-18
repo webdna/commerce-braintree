@@ -192,7 +192,7 @@ class Gateway extends BaseGateway
     public function getPaymentMethod($token)
     {
         return $this->gateway->paymentMethod()->find($token);
-    }
+	}
 
     public function createPaymentMethod(BasePaymentForm $sourceData, int $userId)
     {
@@ -207,10 +207,17 @@ class Gateway extends BaseGateway
             'customerId' => $user->uid,
             'paymentMethodNonce' => $sourceData->nonce,
             'options' => [
-                'makeDefault' => (boolean)$sourceData->default,
+				'makeDefault' => (boolean)$sourceData->default,
             ],
         ]);
-    }
+	}
+	
+	public function deletePaymentMethod($token)
+	{
+		$result = $this->gateway->paymentMethod()->delete($token);
+
+		return $result->success;
+	}
     
     public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
     {
@@ -237,10 +244,12 @@ class Gateway extends BaseGateway
             //check for existing paymentSource
             $sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
 
-            // foreach ($sources as $source)
-            // {
-            // 	Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($source->id);
-            // }
+            foreach ($sources as $source)
+            {
+				if ($source->token == $response->paymentMethod->token) {
+					Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($source->id);
+				}
+            }
             
             $description = Craft::t('commerce-braintree', '{cardType} ending in ••••{last4}', ['cardType' => $response->paymentMethod->cardType, 'last4' => $response->paymentMethod->last4]);
 
@@ -350,6 +359,21 @@ class Gateway extends BaseGateway
 		$response = $this->gateway->subscription()->cancel($subscription->reference);
 
 		if($response->success) {
+			// remove paymentsource
+			$source = $this->getPaymentSource($subscription->userId, $subscription->subscriptionData['paymentMethodToken']);
+			if ($source) {
+				// check if any other subscriptions are using this payment source
+				$canDelete = true;
+				foreach (Subscription::find()->gatewayId($this->id)->userId($subscription->userId)->isCanceled(0)->reference(['not',$subscription->reference])->all() as $sub) {
+					if ($sub->subscriptionData['paymentMethodToken'] == $source->token) {
+						$canDelete = false;
+					}
+				}
+				if ($canDelete) {
+					Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($source->id);
+				}
+			}
+
 			return new SubscriptionResponse($response->subscription);
 		} else {
 
@@ -486,7 +510,7 @@ class Gateway extends BaseGateway
 
     public function subscribe(User $user, BasePlan $plan, SubscriptionForm $parameters): SubscriptionResponseInterface
     {
-        $source = $this->getPaymentSource($user->id);
+		$source = $this->getPaymentSource($user->id);
         if (!$source) {
             throw new PaymentSourceException(Craft::t('commerce-braintree', 'No payment sources are saved to use for subscriptions.'));
         }
@@ -497,9 +521,10 @@ class Gateway extends BaseGateway
             'planId' => $plan->reference,
 			'price' => $plan->price,
 			'merchantAccountId' => $this->merchantAccountId[$plan->getCurrency()],
-        ]);
-
-        if (!$response->success) {
+		]);
+		
+		if (!$response->success) {
+			//Craft::dd($response);
             throw new SubscriptionException(Craft::t('commerce-braintree', 'Unable to subscribe at this time.'));
         }
 
@@ -571,7 +596,7 @@ class Gateway extends BaseGateway
      */
     public function getHasBillingIssues(Subscription $subscription): bool
     {
-        throw new NotSupportedException();
+        return false;
     }
 
     /**
@@ -579,7 +604,7 @@ class Gateway extends BaseGateway
      */
     public function getBillingIssueDescription(Subscription $subscription): string
     {
-        throw new NotSupportedException();
+		return '';
     }
 
     /**
@@ -606,7 +631,8 @@ class Gateway extends BaseGateway
                 break;
             case 'subscription_charged_successfully':
                 $this->_handleSubscriptionCharged($webhookNotification->subscription);
-                break;
+				break;
+			// subscription_charged_unsuccessfully
 
         }
 
@@ -670,18 +696,24 @@ class Gateway extends BaseGateway
     }
 
 
-    private function getPaymentSource($userId)
+    private function getPaymentSource($userId, $token=null)
     {
         $sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
 
         if (\count($sources) === 0) {
             return null;
-        }
+		}
+		
+		if ($token) {
+			foreach ($sources as $source) {
+				if ($source->token == $token) {
+					return $source;
+				}
+			}
+		}
 
         // get first payment source
-        $source = $sources[0];
-
-        return $source;
+        return $sources[0];
     }
 
     private function getCpPaymentFormHtml(array $params = [])
@@ -740,9 +772,9 @@ class Gateway extends BaseGateway
         $previousMode = $view->getTemplateMode();
         $view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-		$view->registerJsFile('https://js.braintreegateway.com/web/dropin/1.21.0/js/dropin.min.js');
-		$view->registerAssetBundle(DropinUiAsset::class);
-		$html = $view->renderTemplate('commerce-braintree/paymentForms/dropin-ui', $params);
+        $view->registerJsFile('https://js.braintreegateway.com/web/dropin/1.21.0/js/dropin.min.js');
+        $view->registerAssetBundle(DropinUiAsset::class);
+        $html = $view->renderTemplate('commerce-braintree/paymentForms/dropin-ui', $params);
 
         $view->setTemplateMode($previousMode);
 
@@ -827,26 +859,25 @@ class Gateway extends BaseGateway
 
         Commerce::getInstance()->getSubscriptions()->receivePayment($subscription, $payment, $data->nextBillingDate);
     }
-	
-	private function _formatAddress($data) {
+    
+    private function _formatAddress($data)
+    {
+        if (!$data) {
+            return [];
+        }
 
-		if (!$data) {
-			return [];
-		}
-
-		return [
-			'firstName' => $data->firstName,
-			'lastName' => $data->lastName,
-			'company' => $data->businessName,
-			'streetAddress' => $data->address1,
-			'extendedAddress'=> $data->address2,
-			'locality' => $data->city,
-			'region' => ($data->state && $data->country && $data->country->iso == 'US') ? $data->state->abbreviation : $data->stateName,
-			'postalCode' => $data->zipCode,
-			//'countryName' => $data->country ? $data->country->name : '',
-			'countryCodeAlpha2' => $data->country ? $data->country->iso : ''
-		];
-
+        return [
+            'firstName' => $data->firstName,
+            'lastName' => $data->lastName,
+            'company' => $data->businessName,
+            'streetAddress' => $data->address1,
+            'extendedAddress'=> $data->address2,
+            'locality' => $data->city,
+            'region' => ($data->state && $data->country && $data->country->iso == 'US') ? $data->state->abbreviation : $data->stateName,
+            'postalCode' => $data->zipCode,
+            //'countryName' => $data->country ? $data->country->name : '',
+            'countryCodeAlpha2' => $data->country ? $data->country->iso : ''
+        ];
     }
 
     public function format3DSAddress($order)
