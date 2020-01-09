@@ -574,6 +574,7 @@ class Gateway extends BaseGateway
         $userId = Craft::$app->getUser()->getId();
         $description = "";
 
+		$oldSource = $this->getPaymentSource($subscription->userId, $subscription->subscriptionData['paymentMethodToken']);
         $source = Commerce::getInstance()->getPaymentSources()->createPaymentSource($userId, $gateway, $paymentForm, $description);
 
         $params = [
@@ -586,7 +587,22 @@ class Gateway extends BaseGateway
 
         if (!$response->success) {
             throw new SubscriptionException(Craft::t('commerce-braintree', 'Unable to unpdate subscription at this time.'));
-        }
+        } else {
+			// remove paymentsource
+			
+			if ($oldSource) {
+				// check if any other subscriptions are using this payment source
+				$canDelete = true;
+				foreach (Subscription::find()->gatewayId($this->id)->userId($subscription->userId)->isCanceled(0)->reference(['not',$subscription->reference])->all() as $sub) {
+					if ($sub->subscriptionData['paymentMethodToken'] == $oldSource->token) {
+						$canDelete = false;
+					}
+				}
+				if ($canDelete) {
+					Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($oldSource->id);
+				}
+			}
+		}
 
         return new SubscriptionResponse($response->subscription);
     }

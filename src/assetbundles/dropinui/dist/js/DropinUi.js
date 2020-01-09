@@ -45,6 +45,10 @@
 					card: {
 						cardholderName: {
 							required: true
+						},
+						vault: {
+							vaultCard: true,
+							allowVaultCardOverride: true
 						}
 					}
 				};
@@ -52,7 +56,7 @@
 					options.translations = JSON.parse($dropinUi.attr('data-translations'));
 				}
 
-				if ($dropinUi.attr('data-subscription') == false) {
+				if (Boolean($dropinUi.attr('data-subscription')) != true) {
 					options.paypal = {
 						flow: 'checkout',
 						env: $dropinUi.attr('data-sandbox') ? 'sandbox' : 'production',
@@ -85,6 +89,8 @@
 							}
 						}
 					};
+				} else {
+					options.card.vault.allowVaultCardOverride = false;
 				}
 
 				if ($dropinUi.data('threedsecure')) {

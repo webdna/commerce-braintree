@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.3.2 - 2020-01-09
+
+### Fixed
+
+-   switch subscription payment source removes old payment source if not in use by another subscription.
+
+### Changed
+
+-   DropinUI don't allow save card option if its a subscription payment
+
 ## 2.3.1 - 2019-12-18
 
 ### Fixed
