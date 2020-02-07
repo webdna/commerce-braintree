@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## 2.3.2 - 2020-01-09
 
+### Changed
+
+-   Update requirements to allow for Craft Commerce 3
+
+
+## 2.3.2 - 2020-01-09
+
 ### Fixed
 
 -   switch subscription payment source removes old payment source if not in use by another subscription.

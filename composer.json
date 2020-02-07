@@ -1,8 +1,8 @@
 {
 	"name": "kuriousagency/commerce-braintree",
-	"description": "Braintree gateway for Commerce 2",
+	"description": "Braintree gateway for Craft Commerce",
 	"type": "craft-plugin",
-	"version": "2.3.2",
+	"version": "2.3.3",
 	"keywords": [
 		"craft",
 		"cms",
@@ -19,7 +19,7 @@
 	],
 	"require": {
 		"craftcms/cms": "^3.0.0",
-		"craftcms/commerce": "^2.0.0-beta.12",
+		"craftcms/commerce": "^2.0.0|^3.0",
 		"braintree/braintree_php": "^4.5"
 	},
 	"autoload": {
