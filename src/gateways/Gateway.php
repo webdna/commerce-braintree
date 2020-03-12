@@ -85,7 +85,7 @@ class Gateway extends BaseGateway
 
     public $sendCartInfo;
     
-    private $gateway;
+    public $gateway;
 
     private $customer;
 
