@@ -85,7 +85,7 @@ class Gateway extends BaseGateway
 
     public $sendCartInfo;
     
-    public $gateway;
+    private $gateway;
 
     private $customer;
 
@@ -508,6 +508,12 @@ class Gateway extends BaseGateway
         return $output;
     }
 
+    public function createSubscription($data)
+    {
+        return (object)$this->gateway->subscription()->create($data);
+
+    }
+
     public function subscribe(User $user, BasePlan $plan, SubscriptionForm $parameters): SubscriptionResponseInterface
     {
 		$source = $this->getPaymentSource($user->id);
@@ -516,12 +522,14 @@ class Gateway extends BaseGateway
         }
         $plan = new Plan($plan);
 
-        $response = (object)$this->gateway->subscription()->create([
+        $data = [
             'paymentMethodToken' => $source->token,
             'planId' => $plan->reference,
 			'price' => $plan->price,
 			'merchantAccountId' => $this->merchantAccountId[$plan->getCurrency()],
-		]);
+		];
+
+        $response = $this->createSubscription($data);
 		
 		if (!$response->success) {
 			//Craft::dd($response);
