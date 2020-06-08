@@ -173,7 +173,7 @@ class Gateway extends BaseGateway
         if ($paymentForm && $paymentForm->hasProperty('nonce') && $paymentForm->nonce) {
             $request['token'] = $paymentForm->nonce;
         }
-        $request['merchantAccountId'] = $this->merchantAccountId[$request['currency']];
+        $request['merchantAccountId'] = Craft::parseEnv($this->merchantAccountId[$request['currency']]);
         //Craft::dd($request);
     }*/
 
@@ -313,7 +313,7 @@ class Gateway extends BaseGateway
                 $data['paymentMethodToken'] = $form->token;
             }
             if (isset($this->merchantAccountId[$transaction->currency]) && !empty($this->merchantAccountId[$transaction->currency])) {
-				$data['merchantAccountId'] = $this->merchantAccountId[$transaction->currency];
+				$data['merchantAccountId'] = Craft::parseEnv($this->merchantAccountId[$transaction->currency]);
 			} else {
 				$data['merchantAccountId'] = "";
 				$data['amount'] = $transaction->amount;
@@ -526,7 +526,7 @@ class Gateway extends BaseGateway
             'paymentMethodToken' => $source->token,
             'planId' => $plan->reference,
 			'price' => $plan->price,
-			'merchantAccountId' => $this->merchantAccountId[$plan->getCurrency()],
+			'merchantAccountId' => Craft::parseEnv($this->merchantAccountId[$plan->getCurrency()]),
 		];
 
         $response = $this->createSubscription($data);
