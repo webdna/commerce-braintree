@@ -22,7 +22,8 @@
     name: 'merchantId',
     value: gateway.merchantId,
     errors: gateway.getErrors('merchantId'),
-	suggestEnvVars: true
+	suggestEnvVars: true,
+	required: true,
 }) }}
 
 {{ autosuggestField({
@@ -32,7 +33,8 @@
     name: 'publicKey',
     value: gateway.publicKey,
     errors: gateway.getErrors('publicKey'),
-	suggestEnvVars: true
+	suggestEnvVars: true,
+	required: true,
 }) }}
 
 {{ autosuggestField({
@@ -42,7 +44,8 @@
     name: 'privateKey',
     value: gateway.privateKey,
     errors: gateway.getErrors('privateKey'),
-	suggestEnvVars: true
+	suggestEnvVars: true,
+	required: true,
 }) }}
 
 
@@ -56,7 +59,7 @@
 
 
 {% set currencies = craft.commerce.paymentCurrencies.getAllPaymentCurrencies %}
-{% if currencies|length > 1 %}
+{# {% if currencies|length > 1 %} #}
 <hr>
 {% for currency in currencies %}
 {{ autosuggestField({
@@ -64,7 +67,8 @@
     class: 'ltr',
     name: 'merchantAccountId['~currency.iso~']',
     value: gateway.merchantAccountId[currency.iso] ?? null,
-	suggestEnvVars: true
+	suggestEnvVars: true,
+	required: true,
 }) }}
 {% endfor %}
-{% endif %}
+{# {% endif %} #}

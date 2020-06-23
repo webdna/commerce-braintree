@@ -130,9 +130,9 @@ class Gateway extends BaseGateway
     
     public function getToken($user = null, $currency=null)
     {
-        //$omnipayGateway = $this->createGateway();
+		//$omnipayGateway = $this->createGateway();
         $params = [];
-        if ($currency) {
+        if ($currency ) {
             $params['merchantAccountId'] = Craft::parseEnv($this->merchantAccountId[$currency]);
         }
         if ($user) {
