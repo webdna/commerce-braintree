@@ -333,7 +333,11 @@ class Gateway extends BaseGateway
 
             return new PaymentResponse($result);
         } catch (\Exception $exception) {
-            throw $exception;
+            $message = $exception->getMessage();
+            if ($message) {
+                throw new PaymentException($message);
+            }
+            throw new PaymentException('The payment could not be processed (' . get_class($exception) . ')');
         }
     }
 
