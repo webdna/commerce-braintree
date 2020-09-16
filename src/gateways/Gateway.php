@@ -327,7 +327,7 @@ class Gateway extends BaseGateway
                 }
             }
 
-            $result = $this->gateway->transaction()->sale($data);
+            $result = $this->sale($data);
 
             //Craft::dd($result);
 
@@ -343,6 +343,11 @@ class Gateway extends BaseGateway
 
     public function completePurchase(Transaction $transaction): RequestResponseInterface
     {
+    }
+
+    public function createSale($data)
+    {
+        return (object)$this->gateway->transaction()->sale($data);
     }
 
     public function refund(Transaction $transaction): RequestResponseInterface
@@ -479,6 +484,28 @@ class Gateway extends BaseGateway
         }
         
         return $payments;
+    }
+
+    public function refreshPaymentHistory(Subscription $subscription)
+    {
+
+        $response = null;
+        
+        try {
+            $response = $this->gateway->subscription()->find($subscription->reference);
+        } catch (\Braintree_Exception_NotFound $e) {
+            throw new SubscriptionException('Failed to refresh payment history for subscription: ' . $subscription->reference);
+        }
+
+        if($response) {
+            $subscription->setSubscriptionData(Json::encode($response));
+            $subscription->nextPaymentDate = $response->nextBillingDate;
+
+            Craft::$app->getElements()->saveElement($subscription);
+        }
+
+        return true;
+
     }
 
     public function getSubscriptionPlanByReference(string $reference): string
@@ -835,7 +862,7 @@ class Gateway extends BaseGateway
         $payment = new SubscriptionPayment([
             'paymentAmount' => $data->transactions[0]->amount,
             'paymentCurrency' => $currency,
-            'paymentDate' => $data->createdAt,
+            'paymentDate' => $data->transactions[0]->createdAt,
             'paymentReference' => $data->id,
             'paid' => true,
             'response' => Json::encode($data)

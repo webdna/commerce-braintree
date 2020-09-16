@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.3.7 - 2020-09-16
+### Added
+-   Created a refreshPaymentHistory method so the full subscription payment history can be view in the CP using the "Refresh payment history" button.
+
+### Fixed
+-   Fixed a bug where a subscription payment used the original subscription date instead of the latest transaction date.
+
+### Changed
+-   Moved `gateway->transction()->sale` to it's own createSale method.
+
 ## 2.3.6 - 2020-06-23
 ### Fixed
 -	Allow setting of merchantAccountId for single currency setup (#29)
