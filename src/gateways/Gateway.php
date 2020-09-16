@@ -327,7 +327,7 @@ class Gateway extends BaseGateway
                 }
             }
 
-            $result = $this->sale($data);
+            $result = $this->createSale($data);
 
             //Craft::dd($result);
 

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.3.8 - 2020-09-16
+### Fixed
+-   Fixed a bug where purchases weren't using the createSale method
+
 ## 2.3.7 - 2020-09-16
 ### Added
 -   Created a refreshPaymentHistory method so the full subscription payment history can be view in the CP using the "Refresh payment history" button.
