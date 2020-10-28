@@ -10,6 +10,8 @@
 
 namespace kuriousagency\commerce\braintree\gateways;
 
+use kuriousagency\commerce\braintree\Braintree as BT;
+
 use kuriousagency\commerce\braintree\assetbundles\dropinui\DropinUiAsset;
 use kuriousagency\commerce\braintree\assetbundles\hostedfields\HostedFieldsAsset;
 use kuriousagency\commerce\braintree\models\Payment;
@@ -68,107 +70,113 @@ use GuzzleHttp\Psr7\Request;
  */
 class Gateway extends BaseGateway
 {
-    // Properties
-    // =========================================================================
+	// Properties
+	// =========================================================================
 
-    public $apiUrl = '';
-    
-    public $merchantId;
+	public $apiUrl = '';
 
-    public $publicKey;
-    
-    public $privateKey;
+	public $merchantId;
 
-    public $testMode;
+	public $publicKey;
 
-    public $merchantAccountId;
+	public $privateKey;
 
-    public $sendCartInfo;
-    
-    private $gateway;
+	public $testMode;
 
-    private $customer;
+	public $merchantAccountId;
 
+	public $sendCartInfo;
 
-    // Public Methods
-    // =========================================================================
+	private $gateway;
 
-    public function init()
-    {
-        parent::init();
+	private $customer;
 
-        $this->gateway = new Braintree\Gateway([
-            'environment' => $this->testMode ? 'sandbox' : 'production',
-            'merchantId' => Craft::parseEnv($this->merchantId),
-            'publicKey' => Craft::parseEnv($this->publicKey),
-            'privateKey' => Craft::parseEnv($this->privateKey)
-        ]);
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public static function displayName(): string
-    {
-        return Craft::t('commerce', 'Braintree');
-    }
+	// Public Methods
+	// =========================================================================
 
+	public function init()
+	{
+		parent::init();
 
-    /**
-     * @inheritdoc
-     */
-    public function getPaymentFormHtml(array $params = [])
-    {
-        $request = Craft::$app->getRequest();
+		//BT::log('Braintree init');
 
-        if ($request->isCpRequest) {
-            return $this->getCpPaymentFormHtml($params);
-        } else {
-            return $this->getSitePaymentFormHtml($params);
-        }
-    }
-    
-    public function getToken($user = null, $currency=null)
-    {
+		$this->gateway = new Braintree\Gateway([
+			'environment' => $this->testMode ? 'sandbox' : 'production',
+			'merchantId' => Craft::parseEnv($this->merchantId),
+			'publicKey' => Craft::parseEnv($this->publicKey),
+			'privateKey' => Craft::parseEnv($this->privateKey),
+		]);
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public static function displayName(): string
+	{
+		return Craft::t('commerce', 'Braintree');
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getPaymentFormHtml(array $params = [])
+	{
+		$request = Craft::$app->getRequest();
+
+		if ($request->isCpRequest) {
+			return $this->getCpPaymentFormHtml($params);
+		} else {
+			return $this->getSitePaymentFormHtml($params);
+		}
+	}
+
+	public function getToken($user = null, $currency = null)
+	{
 		//$omnipayGateway = $this->createGateway();
-        $params = [];
-        if ($currency ) {
-            $params['merchantAccountId'] = Craft::parseEnv($this->merchantAccountId[$currency]);
-        }
-        if ($user) {
-            try {
-                $customer = $this->getCustomer($user);
-            } catch (\Braintree_Exception_NotFound $e) {
-                $customer = null;
-            }
-            
-            if (!$customer) {
-                $customer = $this->gateway->customer()->create([
-                    'id' => $user->uid,
-                    'firstName' => $user->firstName,
-                    'lastName' => $user->lastName,
-                    'email' => $user->email,
-                ]);
-            }
-            $params['customerId'] = $user->uid;
-        }
-        $token = $this->gateway->clientToken($params)->generate($params);
-        
-        return $token;
-    }
+		$params = [];
+		if ($currency) {
+			$params['merchantAccountId'] = Craft::parseEnv(
+				$this->merchantAccountId[$currency]
+			);
+		}
+		if ($user) {
+			try {
+				$customer = $this->getCustomer($user);
+			} catch (\Braintree_Exception_NotFound $e) {
+				$customer = null;
+			}
 
-    /**
-     * @inheritdoc
-     */
-    public function getSettingsHtml()
-    {
-        return Craft::$app->getView()->renderTemplate('commerce-braintree/gatewaySettings', ['gateway' => $this]);
-    }
+			if (!$customer) {
+				$customer = $this->gateway->customer()->create([
+					'id' => $user->uid,
+					'firstName' => $user->firstName,
+					'lastName' => $user->lastName,
+					'email' => $user->email,
+				]);
+			}
+			$params['customerId'] = $user->uid;
+		}
+		$token = $this->gateway->clientToken($params)->generate($params);
 
-    /**
-     * @inheritdoc
-     */
-    /*public function populateRequest(array &$request, BasePaymentForm $paymentForm = null)
+		return $token;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getSettingsHtml()
+	{
+		return Craft::$app
+			->getView()
+			->renderTemplate('commerce-braintree/gatewaySettings', [
+				'gateway' => $this,
+			]);
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	/*public function populateRequest(array &$request, BasePaymentForm $paymentForm = null)
     {
         if ($paymentForm && $paymentForm->hasProperty('nonce') && $paymentForm->nonce) {
             $request['token'] = $paymentForm->nonce;
@@ -177,588 +185,745 @@ class Gateway extends BaseGateway
         //Craft::dd($request);
     }*/
 
-    public function getCustomer($user)
-    {
-        if (!$this->customer) {
-            try {
-                $this->customer = $this->gateway->customer()->find($user->uid);
-            } catch (\Throwable $exception) {
-                return null;
-            }
-        }
-        return $this->customer;
-    }
-
-    public function getPaymentMethod($token)
-    {
-        return $this->gateway->paymentMethod()->find($token);
+	public function getCustomer($user)
+	{
+		if (!$this->customer) {
+			try {
+				$this->customer = $this->gateway->customer()->find($user->uid);
+			} catch (\Throwable $exception) {
+				return null;
+			}
+		}
+		return $this->customer;
 	}
 
-    public function createPaymentMethod(BasePaymentForm $sourceData, int $userId)
-    {
-        if (!$userId) {
-            $user = Craft::$app->getUser()->getIdentity();
-        } else {
-            $user = Craft::$app->getUsers()->getUserById($userId);
-        }
-        //Craft::dd($sourceData->nonce);
-
-        return (object)$this->gateway->paymentMethod()->create([
-            'customerId' => $user->uid,
-            'paymentMethodNonce' => $sourceData->nonce,
-            'options' => [
-				'makeDefault' => (boolean)$sourceData->default,
-            ],
-        ]);
+	public function getPaymentMethod($token)
+	{
+		return $this->gateway->paymentMethod()->find($token);
 	}
-	
+
+	public function createPaymentMethod(
+		BasePaymentForm $sourceData,
+		int $userId
+	) {
+		if (!$userId) {
+			$user = Craft::$app->getUser()->getIdentity();
+		} else {
+			$user = Craft::$app->getUsers()->getUserById($userId);
+		}
+		//Craft::dd($sourceData->nonce);
+		//BT::log('Create payment method: ' . $order->id);
+
+		return (object) $this->gateway->paymentMethod()->create([
+			'customerId' => $user->uid,
+			'paymentMethodNonce' => $sourceData->nonce,
+			'options' => [
+				'makeDefault' => (bool) $sourceData->default,
+			],
+		]);
+	}
+
 	public function deletePaymentMethod($token)
 	{
 		$result = $this->gateway->paymentMethod()->delete($token);
 
 		return $result->success;
 	}
-    
-    public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
-    {
-    }
 
-    public function capture(Transaction $transaction, string $reference): RequestResponseInterface
-    {
-    }
+	public function authorize(
+		Transaction $transaction,
+		BasePaymentForm $form
+	): RequestResponseInterface {
+	}
 
-    public function completeAuthorize(Transaction $transaction): RequestResponseInterface
-    {
-    }
+	public function capture(
+		Transaction $transaction,
+		string $reference
+	): RequestResponseInterface {
+	}
 
-    public function createPaymentSource(BasePaymentForm $sourceData, int $userId): PaymentSource
-    {
-        //Craft::dd($sourceData);
-        try {
-            $response = $this->createPaymentMethod($sourceData, $userId);
-            //Craft::dd($response);
-            if (!$response->success) {
-                throw new PaymentSourceException($response->message);
-            }
+	public function completeAuthorize(
+		Transaction $transaction
+	): RequestResponseInterface {
+	}
 
-            //check for existing paymentSource
-            $sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
+	public function createPaymentSource(
+		BasePaymentForm $sourceData,
+		int $userId
+	): PaymentSource {
+		//Craft::dd($sourceData);
+		try {
+			$response = $this->createPaymentMethod($sourceData, $userId);
+			//Craft::dd($response);
+			if (!$response->success) {
+				throw new PaymentSourceException($response->message);
+			}
 
-            foreach ($sources as $source)
-            {
+			//check for existing paymentSource
+			$sources = Commerce::getInstance()
+				->getPaymentSources()
+				->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
+
+			foreach ($sources as $source) {
 				if ($source->token == $response->paymentMethod->token) {
-					Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($source->id);
+					Commerce::getInstance()
+						->getPaymentSources()
+						->deletePaymentSourceById($source->id);
 				}
-            }
-            
-            $description = Craft::t('commerce-braintree', '{cardType} ending in ••••{last4}', ['cardType' => $response->paymentMethod->cardType, 'last4' => $response->paymentMethod->last4]);
+			}
 
-            $paymentSource = new PaymentSource([
-                'userId' => $userId,
-                'gatewayId' => $this->id,
-                'token' => $response->paymentMethod->token,
-                'response' => $response->paymentMethod,
-                'description' => $description,
-            ]);
+			$description = Craft::t(
+				'commerce-braintree',
+				'{cardType} ending in ••••{last4}',
+				[
+					'cardType' => $response->paymentMethod->cardType,
+					'last4' => $response->paymentMethod->last4,
+				]
+			);
 
-            return $paymentSource;
-        } catch (\Throwable $exception) {
-            throw new PaymentSourceException($exception->getMessage());
-        }
-    }
+			$paymentSource = new PaymentSource([
+				'userId' => $userId,
+				'gatewayId' => $this->id,
+				'token' => $response->paymentMethod->token,
+				'response' => $response->paymentMethod,
+				'description' => $description,
+			]);
 
-    public function deletePaymentSource($token): bool
-    {
-        return true;
-    }
+			return $paymentSource;
+		} catch (\Throwable $exception) {
+			throw new PaymentSourceException($exception->getMessage());
+		}
+	}
 
-    public function getPaymentFormModel(): BasePaymentForm
-    {
-        return new Payment();
-    }
+	public function deletePaymentSource($token): bool
+	{
+		return true;
+	}
 
-    public function purchase(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
-    {
-        //Craft::dd($transaction);
-        try {
-            $order = $transaction->getOrder();
-            $data = [
-                'amount' => $transaction->paymentAmount,
-                'orderId' => $order->shortNumber,
-                'options' => [ 'submitForSettlement' => true ]
-            ];
+	public function getPaymentFormModel(): BasePaymentForm
+	{
+		return new Payment();
+	}
 
-            if ($order->user) {
-                if ($this->getCustomer($order->user)) {
-                    $data['customerId'] = $order->user->uid;
-                } else {
-                    $data['customer'] = [
-                        'firstName' => $order->user->firstName,
-                        'lastName' => $order->user->lastName,
-                        'email' => $order->email,
-                    ];
-                }
-            } else {
-                $data['customer'] = [
-                    'email' => $order->email,
-                ];
-            }
+	public function purchase(
+		Transaction $transaction,
+		BasePaymentForm $form
+	): RequestResponseInterface {
+		//Craft::dd($transaction);
+		try {
+			$order = $transaction->getOrder();
+			$data = [
+				'amount' => $transaction->paymentAmount,
+				'orderId' => $order->shortNumber,
+				'options' => ['submitForSettlement' => true],
+			];
 
-            // deviceData
+			if ($order->user) {
+				if ($this->getCustomer($order->user)) {
+					$data['customerId'] = $order->user->uid;
+				} else {
+					$data['customer'] = [
+						'firstName' => $order->user->firstName,
+						'lastName' => $order->user->lastName,
+						'email' => $order->email,
+					];
+				}
+			} else {
+				$data['customer'] = [
+					'email' => $order->email,
+				];
+			}
 
+			// deviceData
 
-            if ($form->nonce) {
-                $data['paymentMethodNonce'] = $form->nonce;
-            } elseif ($form->token) {
-                $data['paymentMethodToken'] = $form->token;
-            }
-            if (isset($this->merchantAccountId[$transaction->currency]) && !empty($this->merchantAccountId[$transaction->currency])) {
-				$data['merchantAccountId'] = Craft::parseEnv($this->merchantAccountId[$transaction->currency]);
+			if ($form->nonce) {
+				$data['paymentMethodNonce'] = $form->nonce;
+			} elseif ($form->token) {
+				$data['paymentMethodToken'] = $form->token;
+			}
+			if (
+				isset($this->merchantAccountId[$transaction->currency]) &&
+				!empty($this->merchantAccountId[$transaction->currency])
+			) {
+				$data['merchantAccountId'] = Craft::parseEnv(
+					$this->merchantAccountId[$transaction->currency]
+				);
 			} else {
 				$data['merchantAccountId'] = "";
 				$data['amount'] = $transaction->amount;
 			}
-            if ($form->type != "PayPalAccount") {
-                if ($order->billingAddress || $order->shippingAddress) {
-                    $data['billing'] = $this->_formatAddress($order->billingAddress ?: $order->shippingAddress);
-                }
-                if ($order->shippingAddress) {
-                    $data['shipping'] = $this->_formatAddress($order->shippingAddress);
-                }
-            }
+			if ($form->type != "PayPalAccount") {
+				if ($order->billingAddress || $order->shippingAddress) {
+					$data['billing'] = $this->_formatAddress(
+						$order->billingAddress ?: $order->shippingAddress
+					);
+				}
+				if ($order->shippingAddress) {
+					$data['shipping'] = $this->_formatAddress(
+						$order->shippingAddress
+					);
+				}
+			}
 
-            $result = $this->createSale($data);
+			$result = $this->createSale($data);
 
-            //Craft::dd($result);
+			BT::log('Create Sale: ' . $order->id);
 
-            return new PaymentResponse($result);
-        } catch (\Exception $exception) {
-            $message = $exception->getMessage();
-            if ($message) {
-                throw new PaymentException($message);
-            }
-            throw new PaymentException('The payment could not be processed (' . get_class($exception) . ')');
-        }
-    }
+			//Craft::dd($result);
 
-    public function completePurchase(Transaction $transaction): RequestResponseInterface
-    {
-    }
+			return new PaymentResponse($result);
+		} catch (\Exception $exception) {
+			$message = $exception->getMessage();
+			if ($message) {
+				BT::error($message);
+				throw new PaymentException($message);
+			}
+			BT::error(
+				'The payment could not be processed (' .
+					get_class($exception) .
+					')'
+			);
+			throw new PaymentException(
+				'The payment could not be processed (' .
+					get_class($exception) .
+					')'
+			);
+		}
+	}
 
-    public function createSale($data)
-    {
-        return (object)$this->gateway->transaction()->sale($data);
-    }
+	public function completePurchase(
+		Transaction $transaction
+	): RequestResponseInterface {
+	}
 
-    public function refund(Transaction $transaction): RequestResponseInterface
-    {
-        //Craft::dd($transaction);
-        try {
-            $result = $this->gateway->transaction()->refund($transaction->reference, $transaction->amount);
-            return new PaymentResponse($result);
-        } catch (\Exception $exception) {
-            throw $exception;
-        }
-    }
+	public function createSale($data)
+	{
+		return (object) $this->gateway->transaction()->sale($data);
+	}
 
-    // Subscriptions
-	public function cancelSubscription(Subscription $subscription, BaseCancelSubscriptionForm $parameters): SubscriptionResponseInterface
-    {
-		
-		$response = $this->gateway->subscription()->cancel($subscription->reference);
+	public function refund(Transaction $transaction): RequestResponseInterface
+	{
+		//Craft::dd($transaction);
+		try {
+			$result = $this->gateway
+				->transaction()
+				->refund($transaction->reference, $transaction->amount);
+			return new PaymentResponse($result);
+		} catch (\Exception $exception) {
+			throw $exception;
+		}
+	}
 
-		if($response->success) {
+	// Subscriptions
+	public function cancelSubscription(
+		Subscription $subscription,
+		BaseCancelSubscriptionForm $parameters
+	): SubscriptionResponseInterface {
+		$response = $this->gateway
+			->subscription()
+			->cancel($subscription->reference);
+
+		if ($response->success) {
 			// remove paymentsource
-			$source = $this->getPaymentSource($subscription->userId, $subscription->subscriptionData['paymentMethodToken']);
+			$source = $this->getPaymentSource(
+				$subscription->userId,
+				$subscription->subscriptionData['paymentMethodToken']
+			);
 			if ($source) {
 				// check if any other subscriptions are using this payment source
 				$canDelete = true;
-				foreach (Subscription::find()->gatewayId($this->id)->userId($subscription->userId)->isCanceled(0)->reference(['not',$subscription->reference])->all() as $sub) {
-					if ($sub->subscriptionData['paymentMethodToken'] == $source->token) {
+				foreach (
+					Subscription::find()
+						->gatewayId($this->id)
+						->userId($subscription->userId)
+						->isCanceled(0)
+						->reference(['not', $subscription->reference])
+						->all()
+					as $sub
+				) {
+					if (
+						$sub->subscriptionData['paymentMethodToken'] ==
+						$source->token
+					) {
 						$canDelete = false;
 					}
 				}
 				if ($canDelete) {
-					Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($source->id);
+					Commerce::getInstance()
+						->getPaymentSources()
+						->deletePaymentSourceById($source->id);
 				}
 			}
 
 			return new SubscriptionResponse($response->subscription);
 		} else {
-
-			foreach($response->errors->forKey('subscription')->shallowAll() AS $error) {
+			foreach (
+				$response->errors->forKey('subscription')->shallowAll()
+				as $error
+			) {
 				// subscription has already been cancelled on Braintree but not in the site. So let's cancel on site as well
-				if($error->code == "81905") {
+				if ($error->code == "81905") {
 					try {
-						$response = $this->gateway->subscription()->find($subscription->reference);
+						$response = $this->gateway
+							->subscription()
+							->find($subscription->reference);
 					} catch (Braintree_Exception_NotFound $e) {
-						throw new SubscriptionException('Failed to cancel subscription: ' . $subscription->reference . ". Error:" . $e->getMessage());
+						throw new SubscriptionException(
+							'Failed to cancel subscription: ' .
+								$subscription->reference .
+								". Error:" .
+								$e->getMessage()
+						);
 					}
 
 					return new SubscriptionResponse($response);
 				}
 			}
 
-			throw new SubscriptionException('Failed to cancel subscription: ' . $subscription->reference);
+			throw new SubscriptionException(
+				'Failed to cancel subscription: ' . $subscription->reference
+			);
 		}
-		
 	}
 
-    public function getCancelSubscriptionFormHtml(Subscription $subscription): string
-    {
-        $view = Craft::$app->getView();
+	public function getCancelSubscriptionFormHtml(
+		Subscription $subscription
+	): string {
+		$view = Craft::$app->getView();
 
-        $previousMode = $view->getTemplateMode();
-        $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+		$previousMode = $view->getTemplateMode();
+		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-        $html = $view->renderTemplate('commerce-braintree/cancelSubscriptionForm');
-        $view->setTemplateMode($previousMode);
+		$html = $view->renderTemplate(
+			'commerce-braintree/cancelSubscriptionForm'
+		);
+		$view->setTemplateMode($previousMode);
 
-        return $html;
-    }
-    
-    public function getCancelSubscriptionFormModel(): BaseCancelSubscriptionForm
-    {
-        return new CancelSubscription();
-    }
-    
-    public function getNextPaymentAmount(Subscription $subscription): string
-    {
-        $data = $subscription['subscriptionData'];
-        $currency = Commerce::getInstance()->getCurrencies()->getCurrencyByIso($subscription->plan->currency);
-        return Craft::$app->getFormatter()->asCurrency($data['nextBillingPeriodAmount'], $currency);
-        //return $data->nextBillingPeriodAmount;
-    }
+		return $html;
+	}
 
+	public function getCancelSubscriptionFormModel(): BaseCancelSubscriptionForm
+	{
+		return new CancelSubscription();
+	}
 
-    public function getPlanModel(): BasePlan
-    {
-        return new Plan();
-    }
-    
-    public function getPlanSettingsHtml(array $params = [])
-    {
-        $params['plans'] = [];
-        foreach ($this->getSubscriptionPlans() as $plan) {
-            $params['plans'][] = [
-                'label' => $plan->name,
-                'value' => $plan->id,
-            ];
-        }
-        return Craft::$app->getView()->renderTemplate('commerce-braintree/planSettings', $params);
-    }
-    
-    public function getSubscriptionFormHtml(): string
-    {
-        $view = Craft::$app->getView();
+	public function getNextPaymentAmount(Subscription $subscription): string
+	{
+		$data = $subscription['subscriptionData'];
+		$currency = Commerce::getInstance()
+			->getCurrencies()
+			->getCurrencyByIso($subscription->plan->currency);
+		return Craft::$app
+			->getFormatter()
+			->asCurrency($data['nextBillingPeriodAmount'], $currency);
+		//return $data->nextBillingPeriodAmount;
+	}
 
-        $previousMode = $view->getTemplateMode();
-        $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+	public function getPlanModel(): BasePlan
+	{
+		return new Plan();
+	}
 
-        $html = $view->renderTemplate('commerce-braintree/subscriptionForm');
-        $view->setTemplateMode($previousMode);
+	public function getPlanSettingsHtml(array $params = [])
+	{
+		$params['plans'] = [];
+		foreach ($this->getSubscriptionPlans() as $plan) {
+			$params['plans'][] = [
+				'label' => $plan->name,
+				'value' => $plan->id,
+			];
+		}
+		return Craft::$app
+			->getView()
+			->renderTemplate('commerce-braintree/planSettings', $params);
+	}
 
-        return $html;
-    }
-    
-    public function getSubscriptionFormModel(): SubscriptionForm
-    {
-        return new SubscriptionForm();
-    }
-    
+	public function getSubscriptionFormHtml(): string
+	{
+		$view = Craft::$app->getView();
 
-    public function getSubscriptionPayments(Subscription $subscription): array
-    {
-        $data = $subscription['subscriptionData'];
-        //Craft::dd($data->transactions);
-        $payments = [];
-        foreach ($data['transactions'] as $transaction) {
-            $payments[] = new SubscriptionPayment([
-                'paymentAmount' => $transaction['amount'],
-                'paymentCurrency' => $transaction['currencyIsoCode'],
-                'paymentDate' => new \DateTime($transaction['createdAt']['date'], new \DateTimeZone($transaction['createdAt']['timezone'])),
-                'paymentReference' => $transaction['id'],
-                'paid' => $this->isPaid($transaction['status']),
-                'response' => Json::encode($transaction)
-            ]);
-        }
-        
-        return $payments;
-    }
+		$previousMode = $view->getTemplateMode();
+		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-    public function refreshPaymentHistory(Subscription $subscription)
-    {
+		$html = $view->renderTemplate('commerce-braintree/subscriptionForm');
+		$view->setTemplateMode($previousMode);
 
-        $response = null;
-        
-        try {
-            $response = $this->gateway->subscription()->find($subscription->reference);
-        } catch (\Braintree_Exception_NotFound $e) {
-            throw new SubscriptionException('Failed to refresh payment history for subscription: ' . $subscription->reference);
-        }
+		return $html;
+	}
 
-        if($response) {
-            $subscription->setSubscriptionData(Json::encode($response));
-            $subscription->nextPaymentDate = $response->nextBillingDate;
+	public function getSubscriptionFormModel(): SubscriptionForm
+	{
+		return new SubscriptionForm();
+	}
 
-            Craft::$app->getElements()->saveElement($subscription);
-        }
+	public function getSubscriptionPayments(Subscription $subscription): array
+	{
+		$data = $subscription['subscriptionData'];
+		//Craft::dd($data->transactions);
+		$payments = [];
+		foreach ($data['transactions'] as $transaction) {
+			$payments[] = new SubscriptionPayment([
+				'paymentAmount' => $transaction['amount'],
+				'paymentCurrency' => $transaction['currencyIsoCode'],
+				'paymentDate' => new \DateTime(
+					$transaction['createdAt']['date'],
+					new \DateTimeZone($transaction['createdAt']['timezone'])
+				),
+				'paymentReference' => $transaction['id'],
+				'paid' => $this->isPaid($transaction['status']),
+				'response' => Json::encode($transaction),
+			]);
+		}
 
-        return true;
+		return $payments;
+	}
 
-    }
+	public function refreshPaymentHistory(Subscription $subscription)
+	{
+		$response = null;
 
-    public function getSubscriptionPlanByReference(string $reference): string
-    {
-        if (empty($reference)) {
-            return '';
-        }
+		try {
+			$response = $this->gateway
+				->subscription()
+				->find($subscription->reference);
+		} catch (\Braintree_Exception_NotFound $e) {
+			throw new SubscriptionException(
+				'Failed to refresh payment history for subscription: ' .
+					$subscription->reference
+			);
+		}
 
-        foreach ($this->getSubscriptionPlans() as $plan) {
-            if ($plan->id == $reference) {
-                return Json::encode($plan);
-            }
-        }
+		if ($response) {
+			$subscription->setSubscriptionData(Json::encode($response));
+			$subscription->nextPaymentDate = $response->nextBillingDate;
 
-        return '';
-    }
+			Craft::$app->getElements()->saveElement($subscription);
+		}
 
-    public function getSubscriptionPlans(): array
-    {
-        $plans = $this->gateway->plan()->all();
-        return $plans;
+		return true;
+	}
 
-        $output = [];
-        foreach ($plans as $plan) {
-            $output[] = [
-                'label' => $plan->name,
-                'value' => $plan->id,
-            ];
-        }
+	public function getSubscriptionPlanByReference(string $reference): string
+	{
+		if (empty($reference)) {
+			return '';
+		}
 
-        return $output;
-    }
+		foreach ($this->getSubscriptionPlans() as $plan) {
+			if ($plan->id == $reference) {
+				return Json::encode($plan);
+			}
+		}
 
-    public function createSubscription($data)
-    {
-        return (object)$this->gateway->subscription()->create($data);
+		return '';
+	}
 
-    }
+	public function getSubscriptionPlans(): array
+	{
+		$plans = $this->gateway->plan()->all();
+		return $plans;
 
-    public function subscribe(User $user, BasePlan $plan, SubscriptionForm $parameters): SubscriptionResponseInterface
-    {
+		$output = [];
+		foreach ($plans as $plan) {
+			$output[] = [
+				'label' => $plan->name,
+				'value' => $plan->id,
+			];
+		}
+
+		return $output;
+	}
+
+	public function createSubscription($data)
+	{
+		return (object) $this->gateway->subscription()->create($data);
+	}
+
+	public function subscribe(
+		User $user,
+		BasePlan $plan,
+		SubscriptionForm $parameters
+	): SubscriptionResponseInterface {
 		$source = $this->getPaymentSource($user->id);
-        if (!$source) {
-            throw new PaymentSourceException(Craft::t('commerce-braintree', 'No payment sources are saved to use for subscriptions.'));
-        }
-        $plan = new Plan($plan);
+		if (!$source) {
+			throw new PaymentSourceException(
+				Craft::t(
+					'commerce-braintree',
+					'No payment sources are saved to use for subscriptions.'
+				)
+			);
+		}
+		$plan = new Plan($plan);
 
-        $data = [
-            'paymentMethodToken' => $source->token,
-            'planId' => $plan->reference,
+		$data = [
+			'paymentMethodToken' => $source->token,
+			'planId' => $plan->reference,
 			'price' => $plan->price,
-			'merchantAccountId' => Craft::parseEnv($this->merchantAccountId[$plan->getCurrency()]),
+			'merchantAccountId' => Craft::parseEnv(
+				$this->merchantAccountId[$plan->getCurrency()]
+			),
 		];
 
-        $response = $this->createSubscription($data);
-		
+		$response = $this->createSubscription($data);
+
 		if (!$response->success) {
 			//Craft::dd($response);
-            throw new SubscriptionException(Craft::t('commerce-braintree', 'Unable to subscribe at this time.'));
-        }
+			throw new SubscriptionException(
+				Craft::t(
+					'commerce-braintree',
+					'Unable to subscribe at this time.'
+				)
+			);
+		}
 
-        return new SubscriptionResponse($response->subscription);
-    }
+		return new SubscriptionResponse($response->subscription);
+	}
 
-    public function getSwitchPlansFormHtml(PlanInterface $originalPlan, PlanInterface $targetPlan): string
-    {
-        $view = Craft::$app->getView();
-        $previousMode = $view->getTemplateMode();
-        $view->setTemplateMode(View::TEMPLATE_MODE_CP);
-        /** @var Plan $originalPlan */
-        /** @var Plan $targetPlan */
-        $html = $view->renderTemplate('commerce-braintree/switchPlansForm', ['targetPlan' => $targetPlan]);
-        $view->setTemplateMode($previousMode);
-        return $html;
-    }
+	public function getSwitchPlansFormHtml(
+		PlanInterface $originalPlan,
+		PlanInterface $targetPlan
+	): string {
+		$view = Craft::$app->getView();
+		$previousMode = $view->getTemplateMode();
+		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
+		/** @var Plan $originalPlan */
+		/** @var Plan $targetPlan */
+		$html = $view->renderTemplate('commerce-braintree/switchPlansForm', [
+			'targetPlan' => $targetPlan,
+		]);
+		$view->setTemplateMode($previousMode);
+		return $html;
+	}
 
-    public function getSwitchPlansFormModel(): SwitchPlansForm
-    {
-        return new SwitchPlans();
-    }
+	public function getSwitchPlansFormModel(): SwitchPlansForm
+	{
+		return new SwitchPlans();
+	}
 
-    public function switchSubscriptionPlan(Subscription $subscription, BasePlan $plan, SwitchPlansForm $parameters): SubscriptionResponseInterface
-    {
-        $source = $this->getPaymentSource($subscription->userId);
-        $params = [
-            'paymentMethodToken' => $source->token,
-            'price' => $plan->price,
-            'planId' => $plan->reference,
-        ];
-        if (!(bool)$parameters->prorate) {
-            $params['options'] = ['prorateCharges' => false];
-        }
-        //Craft::dd($params);
-        $response = $this->gateway->subscription()->update($subscription->reference, $params);
+	public function switchSubscriptionPlan(
+		Subscription $subscription,
+		BasePlan $plan,
+		SwitchPlansForm $parameters
+	): SubscriptionResponseInterface {
+		$source = $this->getPaymentSource($subscription->userId);
+		$params = [
+			'paymentMethodToken' => $source->token,
+			'price' => $plan->price,
+			'planId' => $plan->reference,
+		];
+		if (!(bool) $parameters->prorate) {
+			$params['options'] = ['prorateCharges' => false];
+		}
+		//Craft::dd($params);
+		$response = $this->gateway
+			->subscription()
+			->update($subscription->reference, $params);
 
-        if (!$response->success) {
-            throw new SubscriptionException(Craft::t('commerce-braintree', 'Unable to subscribe at this time.'));
-        }
+		if (!$response->success) {
+			throw new SubscriptionException(
+				Craft::t(
+					'commerce-braintree',
+					'Unable to subscribe at this time.'
+				)
+			);
+		}
 
-        return new SubscriptionResponse($response->subscription);
-    }
+		return new SubscriptionResponse($response->subscription);
+	}
 
-    public function updateSubscriptionPayment(Subscription $subscription, BasePlan $plan, $gateway, $paymentForm)
-    {
-        $userId = Craft::$app->getUser()->getId();
-        $description = "";
+	public function updateSubscriptionPayment(
+		Subscription $subscription,
+		BasePlan $plan,
+		$gateway,
+		$paymentForm
+	) {
+		$userId = Craft::$app->getUser()->getId();
+		$description = "";
 
-		$oldSource = $this->getPaymentSource($subscription->userId, $subscription->subscriptionData['paymentMethodToken']);
-        $source = Commerce::getInstance()->getPaymentSources()->createPaymentSource($userId, $gateway, $paymentForm, $description);
+		$oldSource = $this->getPaymentSource(
+			$subscription->userId,
+			$subscription->subscriptionData['paymentMethodToken']
+		);
+		$source = Commerce::getInstance()
+			->getPaymentSources()
+			->createPaymentSource(
+				$userId,
+				$gateway,
+				$paymentForm,
+				$description
+			);
 
-        $params = [
-            'paymentMethodToken' => $source->token,
-            'price' => $plan->price,
-            'planId' => $plan->reference,
-        ];
+		$params = [
+			'paymentMethodToken' => $source->token,
+			'price' => $plan->price,
+			'planId' => $plan->reference,
+		];
 
-        $response = $this->gateway->subscription()->update($subscription->reference, $params);
+		$response = $this->gateway
+			->subscription()
+			->update($subscription->reference, $params);
 
-        if (!$response->success) {
-            throw new SubscriptionException(Craft::t('commerce-braintree', 'Unable to unpdate subscription at this time.'));
-        } else {
+		if (!$response->success) {
+			throw new SubscriptionException(
+				Craft::t(
+					'commerce-braintree',
+					'Unable to unpdate subscription at this time.'
+				)
+			);
+		} else {
 			// remove paymentsource
-			
+
 			if ($oldSource) {
 				// check if any other subscriptions are using this payment source
 				$canDelete = true;
-				foreach (Subscription::find()->gatewayId($this->id)->userId($subscription->userId)->isCanceled(0)->reference(['not',$subscription->reference])->all() as $sub) {
-					if ($sub->subscriptionData['paymentMethodToken'] == $oldSource->token) {
+				foreach (
+					Subscription::find()
+						->gatewayId($this->id)
+						->userId($subscription->userId)
+						->isCanceled(0)
+						->reference(['not', $subscription->reference])
+						->all()
+					as $sub
+				) {
+					if (
+						$sub->subscriptionData['paymentMethodToken'] ==
+						$oldSource->token
+					) {
 						$canDelete = false;
 					}
 				}
 				if ($canDelete) {
-					Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($oldSource->id);
+					Commerce::getInstance()
+						->getPaymentSources()
+						->deletePaymentSourceById($oldSource->id);
 				}
 			}
 		}
 
-        return new SubscriptionResponse($response->subscription);
-    }
+		return new SubscriptionResponse($response->subscription);
+	}
 
-    /**
-     * @inheritdoc
-     */
-    public function getHasBillingIssues(Subscription $subscription): bool
-    {
-        return false;
-    }
+	/**
+	 * @inheritdoc
+	 */
+	public function getHasBillingIssues(Subscription $subscription): bool
+	{
+		return false;
+	}
 
-    /**
-     * @inheritdoc
-     */
-    public function getBillingIssueDescription(Subscription $subscription): string
-    {
+	/**
+	 * @inheritdoc
+	 */
+	public function getBillingIssueDescription(
+		Subscription $subscription
+	): string {
 		return '';
-    }
+	}
 
-    /**
-     * @inheritdoc
-     */
-    public function getBillingIssueResolveFormHtml(Subscription $subscription): string
-    {
-        throw new NotSupportedException();
-    }
+	/**
+	 * @inheritdoc
+	 */
+	public function getBillingIssueResolveFormHtml(
+		Subscription $subscription
+	): string {
+		throw new NotSupportedException();
+	}
 
-    public function processWebHook(): WebResponse
-    {
-        $signature = Craft::$app->getRequest()->getRequiredParam('bt_signature');
-        $payload = Craft::$app->getRequest()->getRequiredParam('bt_payload');
+	public function processWebHook(): WebResponse
+	{
+		$signature = Craft::$app
+			->getRequest()
+			->getRequiredParam('bt_signature');
+		$payload = Craft::$app->getRequest()->getRequiredParam('bt_payload');
 
-        $webhookNotification = $this->gateway->webhookNotification()->parse($signature, $payload);
+		$webhookNotification = $this->gateway
+			->webhookNotification()
+			->parse($signature, $payload);
 
-        switch ($webhookNotification->kind) {
-
-            case 'subscription_canceled':
-            case 'subscription_expired':
-            case 'subscription_went_past_due':
-                $this->_handleSubscriptionExpired($webhookNotification->subscription);
-                break;
-            case 'subscription_charged_successfully':
-                $this->_handleSubscriptionCharged($webhookNotification->subscription);
+		switch ($webhookNotification->kind) {
+			case 'subscription_canceled':
+			case 'subscription_expired':
+			case 'subscription_went_past_due':
+				$this->_handleSubscriptionExpired(
+					$webhookNotification->subscription
+				);
+				break;
+			case 'subscription_charged_successfully':
+				$this->_handleSubscriptionCharged(
+					$webhookNotification->subscription
+				);
 				break;
 			// subscription_charged_unsuccessfully
-
-        }
-
-        return Craft::$app->end();
-    }
-
-
-    public function supportsAuthorize(): bool
-    {
-        return false;
-    }
-
-    public function supportsCapture(): bool
-    {
-        return false;
-    }
-
-    public function supportsCompleteAuthorize(): bool
-    {
-        return false;
-    }
-
-    public function supportsCompletePurchase(): bool
-    {
-        return false;
-    }
-
-    public function supportsPaymentSources(): bool
-    {
-        return false;
-    }
-
-    public function supportsPurchase(): bool
-    {
-        return true;
-    }
-
-    public function supportsRefund(): bool
-    {
-        return true;
-    }
-
-    public function supportsPartialRefund(): bool
-    {
-        return true;
-    }
-
-    public function supportsWebhooks(): bool
-    {
-        return true;
-    }
-
-    public function supportsPlanSwitch(): bool
-    {
-        return true;
-    }
-    
-    public function supportsReactivation(): bool
-    {
-        return false;
-    }
-
-
-    private function getPaymentSource($userId, $token=null)
-    {
-        $sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
-
-        if (\count($sources) === 0) {
-            return null;
 		}
-		
+
+		return Craft::$app->end();
+	}
+
+	public function supportsAuthorize(): bool
+	{
+		return false;
+	}
+
+	public function supportsCapture(): bool
+	{
+		return false;
+	}
+
+	public function supportsCompleteAuthorize(): bool
+	{
+		return false;
+	}
+
+	public function supportsCompletePurchase(): bool
+	{
+		return false;
+	}
+
+	public function supportsPaymentSources(): bool
+	{
+		return false;
+	}
+
+	public function supportsPurchase(): bool
+	{
+		return true;
+	}
+
+	public function supportsRefund(): bool
+	{
+		return true;
+	}
+
+	public function supportsPartialRefund(): bool
+	{
+		return true;
+	}
+
+	public function supportsWebhooks(): bool
+	{
+		return true;
+	}
+
+	public function supportsPlanSwitch(): bool
+	{
+		return true;
+	}
+
+	public function supportsReactivation(): bool
+	{
+		return false;
+	}
+
+	private function getPaymentSource($userId, $token = null)
+	{
+		$sources = Commerce::getInstance()
+			->getPaymentSources()
+			->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
+
+		if (\count($sources) === 0) {
+			return null;
+		}
+
 		if ($token) {
 			foreach ($sources as $source) {
 				if ($source->token == $token) {
@@ -767,196 +932,259 @@ class Gateway extends BaseGateway
 			}
 		}
 
-        // get first payment source
-        return $sources[0];
-    }
+		// get first payment source
+		return $sources[0];
+	}
 
-    private function getCpPaymentFormHtml(array $params = [])
-    {
-        $request = Craft::$app->getRequest();
+	private function getCpPaymentFormHtml(array $params = [])
+	{
+		$request = Craft::$app->getRequest();
 
-        $params = array_merge([
-            'gateway' => $this,
-            'paymentForm' => $this->getPaymentFormModel(),
-        ], $params);
+		$params = array_merge(
+			[
+				'gateway' => $this,
+				'paymentForm' => $this->getPaymentFormModel(),
+			],
+			$params
+		);
 
-        $orderId = $request->getParam('orderId');
-        if ($orderId) {
-            $order = Commerce::getInstance()->getOrders()->getOrderById($orderId);
-        } else {
-            $order = Commerce::getInstance()->getCarts()->getCart();
-        }
-        $params['order'] = $order;
+		$orderId = $request->getParam('orderId');
+		if ($orderId) {
+			$order = Commerce::getInstance()
+				->getOrders()
+				->getOrderById($orderId);
+		} else {
+			$order = Commerce::getInstance()
+				->getCarts()
+				->getCart();
+		}
+		$params['order'] = $order;
 
-        $view = Craft::$app->getView();
-        $previousMode = $view->getTemplateMode();
-        $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+		$view = Craft::$app->getView();
+		$previousMode = $view->getTemplateMode();
+		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-        $view->registerJsFile('https://js.braintreegateway.com/web/3.52.0/js/client.min.js');
-        $view->registerJsFile('https://js.braintreegateway.com/web/3.52.0/js/hosted-fields.min.js');
-        $view->registerAssetBundle(HostedFieldsAsset::class);
-        $html = $view->renderTemplate('commerce-braintree/paymentForms/hosted-fields', $params);
+		$view->registerJsFile(
+			'https://js.braintreegateway.com/web/3.52.0/js/client.min.js'
+		);
+		$view->registerJsFile(
+			'https://js.braintreegateway.com/web/3.52.0/js/hosted-fields.min.js'
+		);
+		$view->registerAssetBundle(HostedFieldsAsset::class);
+		$html = $view->renderTemplate(
+			'commerce-braintree/paymentForms/hosted-fields',
+			$params
+		);
 
-        $view->setTemplateMode($previousMode);
+		$view->setTemplateMode($previousMode);
 
-        return $html;
-    }
+		return $html;
+	}
 
-    private function getSitePaymentFormHtml(array $params = [])
-    {
-        $request = Craft::$app->getRequest();
+	private function getSitePaymentFormHtml(array $params = [])
+	{
+		$request = Craft::$app->getRequest();
 
-        $params = array_merge([
-            'gateway' => $this,
-            'paymentForm' => $this->getPaymentFormModel(),
-            'threeDSecure' => false,
-            'vault' => false,
-            'manage' => false,
-            'subscription' => false,
-        ], $params);
+		$params = array_merge(
+			[
+				'gateway' => $this,
+				'paymentForm' => $this->getPaymentFormModel(),
+				'threeDSecure' => false,
+				'vault' => false,
+				'manage' => false,
+				'subscription' => false,
+			],
+			$params
+		);
 
-        $orderId = $request->getParam('number');
-        if ($orderId) {
-            $order = Commerce::getInstance()->getOrders()->getOrderByNumber($orderId);
-        } else {
-            $order = Commerce::getInstance()->getCarts()->getCart();
-        }
-        $params['order'] = $order;
+		$orderId = $request->getParam('number');
+		if ($orderId) {
+			$order = Commerce::getInstance()
+				->getOrders()
+				->getOrderByNumber($orderId);
+		} else {
+			$order = Commerce::getInstance()
+				->getCarts()
+				->getCart();
+		}
+		$params['order'] = $order;
 
-        $view = Craft::$app->getView();
-        $previousMode = $view->getTemplateMode();
-        $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+		$view = Craft::$app->getView();
+		$previousMode = $view->getTemplateMode();
+		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-        $view->registerJsFile('https://js.braintreegateway.com/web/dropin/1.21.0/js/dropin.min.js');
-        $view->registerAssetBundle(DropinUiAsset::class);
-        $html = $view->renderTemplate('commerce-braintree/paymentForms/dropin-ui', $params);
+		$view->registerJsFile(
+			'https://js.braintreegateway.com/web/dropin/1.21.0/js/dropin.min.js'
+		);
+		$view->registerAssetBundle(DropinUiAsset::class);
+		$html = $view->renderTemplate(
+			'commerce-braintree/paymentForms/dropin-ui',
+			$params
+		);
 
-        $view->setTemplateMode($previousMode);
+		$view->setTemplateMode($previousMode);
 
-        return TemplateHelper::raw($html);
-    }
+		return TemplateHelper::raw($html);
+	}
 
-    private function isPaid($status)
-    {
-        switch ($status) {
-            case 'submitted_for_settlement':
-            case 'settling':
-            case 'settled':
-                return true;
-            
-            default:
-                return false;
-        }
-    }
+	private function isPaid($status)
+	{
+		switch ($status) {
+			case 'submitted_for_settlement':
+			case 'settling':
+			case 'settled':
+				return true;
 
-    /**
-    * Create a subscription payment model.
-    *
-    * @param $data
-    * @param Currency $currency the currency used for payment
-    *
-    * @return SubscriptionPayment
-    */
-    private function _createSubscriptionPayment($data, Currency $currency): SubscriptionPayment
-    {
-        $payment = new SubscriptionPayment([
-            'paymentAmount' => $data->transactions[0]->amount,
-            'paymentCurrency' => $currency,
-            'paymentDate' => $data->transactions[0]->createdAt,
-            'paymentReference' => $data->id,
-            'paid' => true,
-            'response' => Json::encode($data)
-        ]);
+			default:
+				return false;
+		}
+	}
 
-        return $payment;
-    }
+	/**
+	 * Create a subscription payment model.
+	 *
+	 * @param $data
+	 * @param Currency $currency the currency used for payment
+	 *
+	 * @return SubscriptionPayment
+	 */
+	private function _createSubscriptionPayment(
+		$data,
+		Currency $currency
+	): SubscriptionPayment {
+		$payment = new SubscriptionPayment([
+			'paymentAmount' => $data->transactions[0]->amount,
+			'paymentCurrency' => $currency,
+			'paymentDate' => $data->transactions[0]->createdAt,
+			'paymentReference' => $data->id,
+			'paid' => true,
+			'response' => Json::encode($data),
+		]);
 
-    /**
-    * Handle an expired subscription.
-    *
-    * @param $data
-    *
-    * @throws \Throwable
-    */
-    private function _handleSubscriptionExpired($data)
-    {
-        $subscription = Subscription::find()->reference($data->id)->one();
+		return $payment;
+	}
 
-        if (!$subscription) {
-            Craft::warning('Subscription with the reference “' . $subscription->id . '” not found when processing Braintree webhook');
+	/**
+	 * Handle an expired subscription.
+	 *
+	 * @param $data
+	 *
+	 * @throws \Throwable
+	 */
+	private function _handleSubscriptionExpired($data)
+	{
+		$subscription = Subscription::find()
+			->reference($data->id)
+			->one();
 
-            return;
-        }
+		if (!$subscription) {
+			Craft::warning(
+				'Subscription with the reference “' .
+					$subscription->id .
+					'” not found when processing Braintree webhook'
+			);
 
-        Commerce::getInstance()->getSubscriptions()->expireSubscription($subscription);
-    }
+			return;
+		}
 
-    private function _handleSubscriptionCharged($data)
-    {
-        $counter = 0;
-        $limit = 5;
+		Commerce::getInstance()
+			->getSubscriptions()
+			->expireSubscription($subscription);
+	}
 
-        do {
-            // Handle cases when Braintree sends us a webhook so soon that we haven't processed the subscription that triggered the webhook
-            sleep(1);
-            $subscription = Subscription::find()->reference($data->id)->one();
-            $counter++;
-        } while (!$subscription && $counter < $limit);
+	private function _handleSubscriptionCharged($data)
+	{
+		$counter = 0;
+		$limit = 5;
 
+		do {
+			// Handle cases when Braintree sends us a webhook so soon that we haven't processed the subscription that triggered the webhook
+			sleep(1);
+			$subscription = Subscription::find()
+				->reference($data->id)
+				->one();
+			$counter++;
+		} while (!$subscription && $counter < $limit);
 
-        if (!$subscription) {
-            throw new SubscriptionException('Subscription with the reference “' . $data->id . '” not found when processing braintree webhook');
-        }
-        
-        $defaultPaymentCurrency = Commerce::getInstance()->getPaymentCurrencies()->getPrimaryPaymentCurrency();
-        $currency = Commerce::getInstance()->getCurrencies()->getCurrencyByIso($defaultPaymentCurrency->iso);
-        $payment = $this->_createSubscriptionPayment($data, $currency);
+		if (!$subscription) {
+			throw new SubscriptionException(
+				'Subscription with the reference “' .
+					$data->id .
+					'” not found when processing braintree webhook'
+			);
+		}
 
-        Commerce::getInstance()->getSubscriptions()->receivePayment($subscription, $payment, $data->nextBillingDate);
-    }
-    
-    private function _formatAddress($data)
-    {
-        if (!$data) {
-            return [];
-        }
+		$defaultPaymentCurrency = Commerce::getInstance()
+			->getPaymentCurrencies()
+			->getPrimaryPaymentCurrency();
+		$currency = Commerce::getInstance()
+			->getCurrencies()
+			->getCurrencyByIso($defaultPaymentCurrency->iso);
+		$payment = $this->_createSubscriptionPayment($data, $currency);
 
-        return [
-            'firstName' => $data->firstName,
-            'lastName' => $data->lastName,
-            'company' => $data->businessName,
-            'streetAddress' => $data->address1,
-            'extendedAddress'=> $data->address2,
-            'locality' => $data->city,
-            'region' => ($data->state && $data->country && $data->country->iso == 'US') ? $data->state->abbreviation : $data->stateName,
-            'postalCode' => $data->zipCode,
-            //'countryName' => $data->country ? $data->country->name : '',
-            'countryCodeAlpha2' => $data->country ? $data->country->iso : ''
-        ];
-    }
+		Commerce::getInstance()
+			->getSubscriptions()
+			->receivePayment($subscription, $payment, $data->nextBillingDate);
+	}
 
-    public function format3DSAddress($order)
-    {
-        if (get_class($order) == 'craft\\commerce\\models\\Address') {
-            $address = $order;
-        } else {
-            $address = $order->billingAddress ?: $order->shippingAddress;
-        }
+	private function _formatAddress($data)
+	{
+		if (!$data) {
+			return [];
+		}
 
-        if (!$address) {
-            return [];
-        }
-        
-        return [
-            'givenName' => $address->firstName,
-            'surname' => $address->lastName,
-            'phoneNumber' => preg_replace('/[()\s-]/', '', $address->phone),
-            'streetAddress' => $address->address1,
-            'extendedAddress' => $address->address2,
-            'locality' => $address->city,
-            'region' => $address->state ? $address->state->abbreviation : $address->stateName,
-            'postalCode' => $address->zipCode,
-            'countryCodeAlpha2' => $address->country ? $address->country->iso : ''
-        ];
-    }
+		return [
+			'firstName' => $data->firstName,
+			'lastName' => $data->lastName,
+			'company' => StringHelper::safeTruncate($data->businessName, 50),
+			'streetAddress' => StringHelper::safeTruncate($data->address1, 50),
+			'extendedAddress' => StringHelper::safeTruncate(
+				$data->address2,
+				50
+			),
+			'locality' => $data->city,
+			'region' =>
+				$data->state && $data->country && $data->country->iso == 'US'
+					? $data->state->abbreviation
+					: $data->stateName,
+			'postalCode' => $data->zipCode,
+			//'countryName' => $data->country ? $data->country->name : '',
+			'countryCodeAlpha2' => $data->country ? $data->country->iso : '',
+		];
+	}
+
+	public function format3DSAddress($order)
+	{
+		if (get_class($order) == 'craft\\commerce\\models\\Address') {
+			$address = $order;
+		} else {
+			$address = $order->billingAddress ?: $order->shippingAddress;
+		}
+
+		if (!$address) {
+			return [];
+		}
+
+		return [
+			'givenName' => $address->firstName,
+			'surname' => $address->lastName,
+			'phoneNumber' => preg_replace('/[()\s-]/', '', $address->phone),
+			'streetAddress' => StringHelper::safeTruncate(
+				$address->address1,
+				50
+			),
+			'extendedAddress' => StringHelper::safeTruncate(
+				$address->address2,
+				50
+			),
+			'locality' => StringHelper::safeTruncate($address->city, 50),
+			'region' => $address->state
+				? $address->state->abbreviation
+				: $address->stateName,
+			'postalCode' => $address->zipCode,
+			'countryCodeAlpha2' => $address->country
+				? $address->country->iso
+				: '',
+		];
+	}
 }

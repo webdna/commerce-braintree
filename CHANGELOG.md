@@ -4,25 +4,40 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.3.9 - 2020-10-28
+
+### Added
+
+-   logging
+-   address field truncating to 50 characters due to braintree api restrictions
+
 ## 2.3.8 - 2020-09-16
+
 ### Fixed
+
 -   Fixed a bug where purchases weren't using the createSale method
 
 ## 2.3.7 - 2020-09-16
+
 ### Added
+
 -   Created a refreshPaymentHistory method so the full subscription payment history can be view in the CP using the "Refresh payment history" button.
 
 ### Fixed
+
 -   Fixed a bug where a subscription payment used the original subscription date instead of the latest transaction date.
 
 ### Changed
+
 -   Moved `gateway->transction()->sale` to it's own createSale method.
 
 ## 2.3.6 - 2020-06-23
+
 ### Fixed
--	Allow setting of merchantAccountId for single currency setup (#29)
--	MerchantAccountId wrapped in Craft::parseEnv (#30)
--	Throwing braintree exceptions using PaymentExceptions (#31)
+
+-   Allow setting of merchantAccountId for single currency setup (#29)
+-   MerchantAccountId wrapped in Craft::parseEnv (#30)
+-   Throwing braintree exceptions using PaymentExceptions (#31)
 
 ## 2.3.5 - 2020-03-26
 
@@ -34,14 +49,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Changed
 
--   Updated gateway property visability 
+-   Updated gateway property visability
 
 ## 2.3.3 - 2020-01-09
 
 ### Changed
 
 -   Update requirements to allow for Craft Commerce 3
-
 
 ## 2.3.2 - 2020-01-09
 

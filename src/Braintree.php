@@ -22,11 +22,12 @@ use craft\services\Plugins;
 use craft\events\PluginEvent;
 use craft\commerce\services\Gateways;
 use craft\events\RegisterComponentTypesEvent;
-
+use craft\log\FileTarget;
+use yii\log\Logger;
 use yii\base\Event;
 
-require_once(__DIR__.'/assetbundles/dropinui/DropinUiAsset.php');
-require_once(__DIR__.'/assetbundles/hostedfields/HostedFieldsAsset.php');
+require_once __DIR__ . '/assetbundles/dropinui/DropinUiAsset.php';
+require_once __DIR__ . '/assetbundles/hostedfields/HostedFieldsAsset.php';
 
 /**
  * Class Braintree
@@ -38,77 +39,94 @@ require_once(__DIR__.'/assetbundles/hostedfields/HostedFieldsAsset.php');
  */
 class Braintree extends Plugin
 {
-    // Static Properties
-    // =========================================================================
+	// Static Properties
+	// =========================================================================
 
-    /**
-     * @var Braintree
-     */
-    public static $plugin;
+	/**
+	 * @var Braintree
+	 */
+	public static $plugin;
 
-    // Public Properties
-    // =========================================================================
+	// Public Properties
+	// =========================================================================
 
-    /**
-     * @var string
-     */
-    public $schemaVersion = '1.0.0';
+	/**
+	 * @var string
+	 */
+	public $schemaVersion = '1.0.0';
 
-    // Public Methods
-    // =========================================================================
+	// Public Methods
+	// =========================================================================
 
-    /**
-     * @inheritdoc
-     */
-    public function init()
-    {
-        parent::init();
+	/**
+	 * @inheritdoc
+	 */
+	public function init()
+	{
+		parent::init();
 		self::$plugin = $this;
-		
-		Event::on(Gateways::class, Gateways::EVENT_REGISTER_GATEWAY_TYPES,  function(RegisterComponentTypesEvent $event) {
-            $event->types[] = Gateway::class;
-        });
 
-        Event::on(
-            Plugins::class,
-            Plugins::EVENT_AFTER_INSTALL_PLUGIN,
-            function (PluginEvent $event) {
-                if ($event->plugin === $this) {
-                }
-            }
-        );
+		Event::on(
+			Gateways::class,
+			Gateways::EVENT_REGISTER_GATEWAY_TYPES,
+			function (RegisterComponentTypesEvent $event) {
+				$event->types[] = Gateway::class;
+			}
+		);
 
-        Craft::info(
-            Craft::t(
-                'commerce-braintree',
-                '{name} plugin loaded',
-                ['name' => $this->name]
-            ),
-            __METHOD__
-        );
-    }
+		Event::on(
+			Plugins::class,
+			Plugins::EVENT_AFTER_INSTALL_PLUGIN,
+			function (PluginEvent $event) {
+				if ($event->plugin === $this) {
+				}
+			}
+		);
 
-    // Protected Methods
-    // =========================================================================
+		Craft::getLogger()->dispatcher->targets[] = new FileTarget([
+			'logFile' => Craft::getAlias('@storage/logs/braintree.log'),
+			'categories' => ['braintree'],
+		]);
 
-    /**
-     * @inheritdoc
-     */
-    protected function createSettingsModel()
-    {
-        return new Settings();
-    }
+		Craft::info(
+			Craft::t('commerce-braintree', '{name} plugin loaded', [
+				'name' => $this->name,
+			]),
+			__METHOD__
+		);
+	}
 
-    /**
-     * @inheritdoc
-     */
-    protected function settingsHtml(): string
-    {
-        return Craft::$app->view->renderTemplate(
-            'commerce-braintree/settings',
-            [
-                'settings' => $this->getSettings()
-            ]
-        );
-    }
+	public static function log($message)
+	{
+		Craft::getLogger()->log($message, Logger::LEVEL_INFO, 'braintree');
+	}
+
+	public static function error($message)
+	{
+		Craft::getLogger()->log($message, Logger::LEVEL_ERROR, 'braintree');
+	}
+
+	// Protected Methods
+	// =========================================================================
+
+	/**
+	 * @inheritdoc
+	 */
+	protected function createSettingsModel()
+	{
+		return new Settings();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	protected function settingsHtml(): string
+	{
+		return Craft::$app->view->renderTemplate(
+			'commerce-braintree/settings',
+			[
+				'settings' => $this->getSettings(),
+			]
+		);
+	}
 }
