@@ -664,6 +664,12 @@ class Gateway extends BaseGateway
 			),
 		];
 
+		if ($parameters->trialDays > 0) {
+			$data['trialPeriod'] = 1;
+			$data['trialDurationUnit'] = 'day';
+			$data['trialDuration'] = $parameters->trialDays;
+		}
+
 		$response = $this->createSubscription($data);
 
 		if (!$response->success) {
