@@ -234,12 +234,101 @@ class Gateway extends BaseGateway
 		Transaction $transaction,
 		BasePaymentForm $form
 	): RequestResponseInterface {
+        //Craft::dd($transaction);
+		try {
+			$order = $transaction->getOrder();
+			$data = [
+				'amount' => $transaction->paymentAmount,
+				'orderId' => $order->shortNumber,
+				'options' => ['submitForSettlement' => false],
+			];
+
+			if ($order->user) {
+				if ($this->getCustomer($order->user)) {
+					$data['customerId'] = $order->user->uid;
+				} else {
+					$data['customer'] = [
+						'firstName' => $order->user->firstName,
+						'lastName' => $order->user->lastName,
+						'email' => $order->email,
+					];
+				}
+			} else {
+				$data['customer'] = [
+					'email' => $order->email,
+				];
+			}
+
+			// deviceData
+
+			if ($form->nonce) {
+				$data['paymentMethodNonce'] = $form->nonce;
+			} elseif ($form->token) {
+				$data['paymentMethodToken'] = $form->token;
+			}
+			if (
+				isset($this->merchantAccountId[$transaction->currency]) &&
+				!empty($this->merchantAccountId[$transaction->currency])
+			) {
+				$data['merchantAccountId'] = Craft::parseEnv(
+					$this->merchantAccountId[$transaction->currency]
+				);
+			} else {
+				$data['merchantAccountId'] = "";
+				$data['amount'] = $transaction->amount;
+			}
+			if ($form->type != "PayPalAccount") {
+				if ($order->billingAddress || $order->shippingAddress) {
+					$data['billing'] = $this->_formatAddress(
+						$order->billingAddress ?: $order->shippingAddress
+					);
+				}
+				if ($order->shippingAddress) {
+					$data['shipping'] = $this->_formatAddress(
+						$order->shippingAddress
+					);
+				}
+			}
+
+			$result = $this->createSale($data);
+
+			BT::log('Create Sale: ' . $order->id);
+
+			//Craft::dd($result);
+
+			return new PaymentResponse($result);
+		} catch (\Exception $exception) {
+			$message = $exception->getMessage();
+			if ($message) {
+				BT::error($message);
+				throw new PaymentException($message);
+			}
+			BT::error(
+				'The payment could not be processed (' .
+					get_class($exception) .
+					')'
+			);
+			throw new PaymentException(
+				'The payment could not be processed (' .
+					get_class($exception) .
+					')'
+			);
+		}
 	}
 
 	public function capture(
 		Transaction $transaction,
 		string $reference
 	): RequestResponseInterface {
+        //Craft::dd($transaction);
+		try {
+			$result = $this->gateway
+				->transaction()
+				->submitForSettlement($reference);
+			return new PaymentResponse($result);
+		} catch (\Exception $exception) {
+			throw $exception;
+		}
 	}
 
 	public function completeAuthorize(
@@ -861,12 +950,12 @@ class Gateway extends BaseGateway
 
 	public function supportsAuthorize(): bool
 	{
-		return false;
+		return true;
 	}
 
 	public function supportsCapture(): bool
 	{
-		return false;
+		return true;
 	}
 
 	public function supportsCompleteAuthorize(): bool
