@@ -6,4 +6,4 @@
 <input type="hidden" name="email" value="{{ order.email }}">
 <input type="hidden" name="address" value="{{ gateway.format3DSAddress(order)|json_encode }}">
 
-<div data-id="dropInUi" {{ gateway.testMode ? 'data-sandbox' }} data-name="{{ storeName ?? siteName }}" data-locale="{{ craft.app.locale().id|replace('-','_') }}" data-subscription="{{ subscription }}" data-threedsecure="{{ threeDSecure }}" data-manage="{{ manage }}" data-translations="{{ (translations ?? null)|json_encode }}"></div>
+<div data-id="dropInUi" {{ gateway.testMode ? 'data-sandbox' }} data-name="{{ storeName ?? siteName }}" data-locale="{{ craft.app.locale().id|replace('-','_') }}" data-subscription="{{ subscription }}" data-threedsecure="{{ threeDSecure }}" data-manage="{{ manage }}" data-translations="{{ (translations ?? null)|json_encode }}" data-googleId="{{ googlePayMerchantId }}"></div>

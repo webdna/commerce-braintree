@@ -16,7 +16,7 @@
 {% from "_includes/forms" import autosuggestField, lightswitchField %}
 
 {{ autosuggestField({
-    label: 'Merchant Id'|t('commerce'),
+    label: 'Merchant ID'|t('commerce'),
     id: 'merchantId',
     class: 'ltr',
     name: 'merchantId',
@@ -48,6 +48,15 @@
 	required: true,
 }) }}
 
+{{ autosuggestField({
+    label: 'Google Pay Merchant ID'|t('commerce'),
+    id: 'googlePayMerchantId',
+    class: 'ltr',
+    name: 'googlePayMerchantId',
+    value: gateway.googlePayMerchantId,
+    errors: gateway.getErrors('googlePayMerchantId'),
+	suggestEnvVars: true,
+}) }}
 
  {{ lightswitchField({
      label: "Test mode?"|t('commerce'),
@@ -63,7 +72,7 @@
 <hr>
 {% for currency in currencies %}
 {{ autosuggestField({
-    label: currency.iso~' Merchant Account Id'|t('commerce'),
+    label: currency.iso~' Merchant Account ID'|t('commerce'),
     class: 'ltr',
     name: 'merchantAccountId['~currency.iso~']',
     value: gateway.merchantAccountId[currency.iso] ?? null,

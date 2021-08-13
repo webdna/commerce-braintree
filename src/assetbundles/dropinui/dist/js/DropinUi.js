@@ -81,13 +81,13 @@
 					};
 
 					options.googlePay = {
-						displayName: $dropinUi.data('name'),
-						paymentRequest: {
-							total: {
-								label: $dropinUi.data('name'),
-								amount: amount
-							}
-						}
+						merchantId: $dropinUi.data('googleId'),
+                        googlePayVersion: 2,
+                        transactionInfo: {
+                            currencyCode: currency,
+                            totalPriceStatus: 'FINAL',
+                            totalPrice: amount
+                        }
 					};
 				} else {
 					options.card.vault.allowVaultCardOverride = false;

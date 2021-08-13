@@ -81,6 +81,8 @@ class Gateway extends BaseGateway
 
 	public $privateKey;
 
+    public $googlePayMerchantId;
+
 	public $testMode;
 
 	public $merchantAccountId;
@@ -1082,6 +1084,7 @@ class Gateway extends BaseGateway
 				'vault' => false,
 				'manage' => false,
 				'subscription' => false,
+                'googlePayMerchantId' => $this->googlePayMerchantId,
 			],
 			$params
 		);
