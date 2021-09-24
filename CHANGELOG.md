@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.4.1 - 2021-09-24
+
+### Fixed
+
+-   Fixed an issue where the Drop-in UI wasn't using the correct Google Pay object - thanks @jmauzyk.
+
+### Added
+
+-   Added a new setting for including a Google Pay Mechant ID.
+
 ## 2.4.0 - 2021-07-20
 
 ### Added

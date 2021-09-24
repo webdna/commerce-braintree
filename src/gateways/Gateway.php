@@ -87,6 +87,8 @@ class Gateway extends BaseGateway
 
 	public $sendCartInfo;
 
+	public $googlePayMerchantId;
+
 	private $gateway;
 
 	private $customer;
@@ -1082,6 +1084,7 @@ class Gateway extends BaseGateway
 				'vault' => false,
 				'manage' => false,
 				'subscription' => false,
+				'googlePayMerchantId' => Craft::parseEnv($this->googlePayMerchantId),
 			],
 			$params
 		);

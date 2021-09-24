@@ -2,7 +2,7 @@
 	"name": "kuriousagency/commerce-braintree",
 	"description": "Braintree gateway for Craft Commerce",
 	"type": "craft-plugin",
-	"version": "2.4.0",
+	"version": "2.4.1",
 	"keywords": [
 		"craft",
 		"cms",

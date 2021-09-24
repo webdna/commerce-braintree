@@ -81,12 +81,13 @@
 					};
 
 					options.googlePay = {
-						displayName: $dropinUi.data('name'),
-						paymentRequest: {
-							total: {
-								label: $dropinUi.data('name'),
-								amount: amount
-							}
+						merchantId: $dropinUi.data('google-pay-id'),
+						googlePayVersion: 2,
+						transactionInfo: {
+							countryCode: address ? JSON.parse(address).countryCodeAlpha2 : '',
+							currencyCode: currency,
+							totalPriceStatus: 'FINAL',
+							totalPrice: amount
 						}
 					};
 				} else {
