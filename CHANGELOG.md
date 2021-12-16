@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.4.2 - 2021-12-16 - UNRELEASED
+
+### Fixed
+
+-   Fixed an issue with the currency being passed to the currency formatter.
+
+### Added
+
+-   Added support for subscription trial days - thanks @digason
+
 ## 2.4.1 - 2021-09-24
 
 ### Fixed
