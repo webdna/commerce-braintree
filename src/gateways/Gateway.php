@@ -204,10 +204,8 @@ class Gateway extends BaseGateway
 		return $this->gateway->paymentMethod()->find($token);
 	}
 
-	public function createPaymentMethod(
-		BasePaymentForm $sourceData,
-		int $userId
-	) {
+	public function createPaymentMethod(BasePaymentForm $sourceData,int $userId)
+	{
 		if (!$userId) {
 			$user = Craft::$app->getUser()->getIdentity();
 		} else {
@@ -232,10 +230,8 @@ class Gateway extends BaseGateway
 		return $result->success;
 	}
 
-	public function authorize(
-		Transaction $transaction,
-		BasePaymentForm $form
-	): RequestResponseInterface {
+	public function authorize(Transaction $transaction,BasePaymentForm $form): RequestResponseInterface
+	{
         //Craft::dd($transaction);
 		try {
 			$order = $transaction->getOrder();
@@ -268,10 +264,7 @@ class Gateway extends BaseGateway
 			} elseif ($form->token) {
 				$data['paymentMethodToken'] = $form->token;
 			}
-			if (
-				isset($this->merchantAccountId[$transaction->currency]) &&
-				!empty($this->merchantAccountId[$transaction->currency])
-			) {
+			if (isset($this->merchantAccountId[$transaction->currency]) && !empty($this->merchantAccountId[$transaction->currency])) {
 				$data['merchantAccountId'] = Craft::parseEnv(
 					$this->merchantAccountId[$transaction->currency]
 				);
@@ -305,23 +298,13 @@ class Gateway extends BaseGateway
 				BT::error($message);
 				throw new PaymentException($message);
 			}
-			BT::error(
-				'The payment could not be processed (' .
-					get_class($exception) .
-					')'
-			);
-			throw new PaymentException(
-				'The payment could not be processed (' .
-					get_class($exception) .
-					')'
-			);
+			BT::error('The payment could not be processed (' . get_class($exception) . ')');
+			throw new PaymentException('The payment could not be processed (' . get_class($exception) . ')');
 		}
 	}
 
-	public function capture(
-		Transaction $transaction,
-		string $reference
-	): RequestResponseInterface {
+	public function capture(Transaction $transaction,string $reference): RequestResponseInterface
+	{
         //Craft::dd($transaction);
 		try {
 			$result = $this->gateway
@@ -333,15 +316,12 @@ class Gateway extends BaseGateway
 		}
 	}
 
-	public function completeAuthorize(
-		Transaction $transaction
-	): RequestResponseInterface {
+	public function completeAuthorize(Transaction $transaction): RequestResponseInterface
+	{
 	}
 
-	public function createPaymentSource(
-		BasePaymentForm $sourceData,
-		int $userId
-	): PaymentSource {
+	public function createPaymentSource(BasePaymentForm $sourceData,int $userId): PaymentSource
+	{
 		//Craft::dd($sourceData);
 		try {
 			$response = $this->createPaymentMethod($sourceData, $userId);
@@ -363,9 +343,7 @@ class Gateway extends BaseGateway
 				}
 			}
 
-			$description = Craft::t(
-				'commerce-braintree',
-				'{cardType} ending in ••••{last4}',
+			$description = Craft::t('commerce-braintree','{cardType} ending in ••••{last4}',
 				[
 					'cardType' => $response->paymentMethod->cardType,
 					'last4' => $response->paymentMethod->last4,
@@ -396,10 +374,8 @@ class Gateway extends BaseGateway
 		return new Payment();
 	}
 
-	public function purchase(
-		Transaction $transaction,
-		BasePaymentForm $form
-	): RequestResponseInterface {
+	public function purchase(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
+	{
 		//Craft::dd($transaction);
 		try {
 			$order = $transaction->getOrder();
@@ -432,10 +408,7 @@ class Gateway extends BaseGateway
 			} elseif ($form->token) {
 				$data['paymentMethodToken'] = $form->token;
 			}
-			if (
-				isset($this->merchantAccountId[$transaction->currency]) &&
-				!empty($this->merchantAccountId[$transaction->currency])
-			) {
+			if (isset($this->merchantAccountId[$transaction->currency]) && !empty($this->merchantAccountId[$transaction->currency])) {
 				$data['merchantAccountId'] = Craft::parseEnv(
 					$this->merchantAccountId[$transaction->currency]
 				);
@@ -482,9 +455,8 @@ class Gateway extends BaseGateway
 		}
 	}
 
-	public function completePurchase(
-		Transaction $transaction
-	): RequestResponseInterface {
+	public function completePurchase(Transaction $transaction): RequestResponseInterface
+	{
 	}
 
 	public function createSale($data)
@@ -496,9 +468,7 @@ class Gateway extends BaseGateway
 	{
 		//Craft::dd($transaction);
 		try {
-			$result = $this->gateway
-				->transaction()
-				->refund($transaction->reference, $transaction->amount);
+			$result = $this->gateway->transaction()->refund($transaction->reference, $transaction->amount);
 			return new PaymentResponse($result);
 		} catch (\Exception $exception) {
 			throw $exception;
@@ -506,10 +476,8 @@ class Gateway extends BaseGateway
 	}
 
 	// Subscriptions
-	public function cancelSubscription(
-		Subscription $subscription,
-		BaseCancelSubscriptionForm $parameters
-	): SubscriptionResponseInterface {
+	public function cancelSubscription(Subscription $subscription, BaseCancelSubscriptionForm $parameters): SubscriptionResponseInterface
+	{
 		$response = $this->gateway
 			->subscription()
 			->cancel($subscription->reference);
@@ -523,35 +491,19 @@ class Gateway extends BaseGateway
 			if ($source) {
 				// check if any other subscriptions are using this payment source
 				$canDelete = true;
-				foreach (
-					Subscription::find()
-						->gatewayId($this->id)
-						->userId($subscription->userId)
-						->isCanceled(0)
-						->reference(['not', $subscription->reference])
-						->all()
-					as $sub
-				) {
-					if (
-						$sub->subscriptionData['paymentMethodToken'] ==
-						$source->token
-					) {
+				foreach (Subscription::find()->gatewayId($this->id)->userId($subscription->userId)->isCanceled(0)->reference(['not', $subscription->reference])->all() as $sub) {
+					if ($sub->subscriptionData['paymentMethodToken'] ==	$source->token) {
 						$canDelete = false;
 					}
 				}
 				if ($canDelete) {
-					Commerce::getInstance()
-						->getPaymentSources()
-						->deletePaymentSourceById($source->id);
+					Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($source->id);
 				}
 			}
 
 			return new SubscriptionResponse($response->subscription);
 		} else {
-			foreach (
-				$response->errors->forKey('subscription')->shallowAll()
-				as $error
-			) {
+			foreach ($response->errors->forKey('subscription')->shallowAll() as $error) {
 				// subscription has already been cancelled on Braintree but not in the site. So let's cancel on site as well
 				if ($error->code == "81905") {
 					try {
@@ -577,9 +529,8 @@ class Gateway extends BaseGateway
 		}
 	}
 
-	public function getCancelSubscriptionFormHtml(
-		Subscription $subscription
-	): string {
+	public function getCancelSubscriptionFormHtml(Subscription $subscription): string
+	{
 		$view = Craft::$app->getView();
 
 		$previousMode = $view->getTemplateMode();
@@ -601,12 +552,8 @@ class Gateway extends BaseGateway
 	public function getNextPaymentAmount(Subscription $subscription): string
 	{
 		$data = $subscription['subscriptionData'];
-		$currency = Commerce::getInstance()
-			->getCurrencies()
-			->getCurrencyByIso($subscription->plan->currency);
-		return Craft::$app
-			->getFormatter()
-			->asCurrency($data['nextBillingPeriodAmount'], $currency);
+		$currency = Commerce::getInstance()->getCurrencies()->getCurrencyByIso($subscription->plan->currency);
+		return Craft::$app->getFormatter()->asCurrency($data['nextBillingPeriodAmount'], $currency->alphabeticCode);
 		//return $data->nextBillingPeriodAmount;
 	}
 
@@ -674,9 +621,7 @@ class Gateway extends BaseGateway
 		$response = null;
 
 		try {
-			$response = $this->gateway
-				->subscription()
-				->find($subscription->reference);
+			$response = $this->gateway->subscription()->find($subscription->reference);
 		} catch (\Braintree_Exception_NotFound $e) {
 			throw new SubscriptionException(
 				'Failed to refresh payment history for subscription: ' .
@@ -730,19 +675,11 @@ class Gateway extends BaseGateway
 		return (object) $this->gateway->subscription()->create($data);
 	}
 
-	public function subscribe(
-		User $user,
-		BasePlan $plan,
-		SubscriptionForm $parameters
-	): SubscriptionResponseInterface {
+	public function subscribe(User $user, BasePlan $plan, SubscriptionForm $parameters): SubscriptionResponseInterface
+	{
 		$source = $this->getPaymentSource($user->id);
 		if (!$source) {
-			throw new PaymentSourceException(
-				Craft::t(
-					'commerce-braintree',
-					'No payment sources are saved to use for subscriptions.'
-				)
-			);
+			throw new PaymentSourceException(Craft::t('commerce-braintree','No payment sources are saved to use for subscriptions.'));
 		}
 		$plan = new Plan($plan);
 
@@ -754,6 +691,12 @@ class Gateway extends BaseGateway
 				$this->merchantAccountId[$plan->getCurrency()]
 			),
 		];
+
+		if ($parameters->trialDays > 0) {
+			$data['trialPeriod'] = 1;
+			$data['trialDurationUnit'] = 'day';
+			$data['trialDuration'] = $parameters->trialDays;
+		}
 
 		$response = $this->createSubscription($data);
 
@@ -770,10 +713,8 @@ class Gateway extends BaseGateway
 		return new SubscriptionResponse($response->subscription);
 	}
 
-	public function getSwitchPlansFormHtml(
-		PlanInterface $originalPlan,
-		PlanInterface $targetPlan
-	): string {
+	public function getSwitchPlansFormHtml(PlanInterface $originalPlan, PlanInterface $targetPlan): string 
+	{
 		$view = Craft::$app->getView();
 		$previousMode = $view->getTemplateMode();
 		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
@@ -791,11 +732,8 @@ class Gateway extends BaseGateway
 		return new SwitchPlans();
 	}
 
-	public function switchSubscriptionPlan(
-		Subscription $subscription,
-		BasePlan $plan,
-		SwitchPlansForm $parameters
-	): SubscriptionResponseInterface {
+	public function switchSubscriptionPlan(Subscription $subscription, BasePlan $plan, SwitchPlansForm $parameters): SubscriptionResponseInterface
+	{
 		$source = $this->getPaymentSource($subscription->userId);
 		$params = [
 			'paymentMethodToken' => $source->token,
@@ -822,27 +760,13 @@ class Gateway extends BaseGateway
 		return new SubscriptionResponse($response->subscription);
 	}
 
-	public function updateSubscriptionPayment(
-		Subscription $subscription,
-		BasePlan $plan,
-		$gateway,
-		$paymentForm
-	) {
+	public function updateSubscriptionPayment(Subscription $subscription, BasePlan $plan, $gateway, $paymentForm)
+	{
 		$userId = Craft::$app->getUser()->getId();
 		$description = "";
 
-		$oldSource = $this->getPaymentSource(
-			$subscription->userId,
-			$subscription->subscriptionData['paymentMethodToken']
-		);
-		$source = Commerce::getInstance()
-			->getPaymentSources()
-			->createPaymentSource(
-				$userId,
-				$gateway,
-				$paymentForm,
-				$description
-			);
+		$oldSource = $this->getPaymentSource($subscription->userId, $subscription->subscriptionData['paymentMethodToken']);
+		$source = Commerce::getInstance()->getPaymentSources()->createPaymentSource($userId, $gateway, $paymentForm, $description);
 
 		$params = [
 			'paymentMethodToken' => $source->token,
@@ -865,28 +789,15 @@ class Gateway extends BaseGateway
 			// remove paymentsource
 
 			if ($oldSource) {
-				// check if any other subscriptions are using this payment source
+				// check ifany other subscriptions are using this payment source
 				$canDelete = true;
-				foreach (
-					Subscription::find()
-						->gatewayId($this->id)
-						->userId($subscription->userId)
-						->isCanceled(0)
-						->reference(['not', $subscription->reference])
-						->all()
-					as $sub
-				) {
-					if (
-						$sub->subscriptionData['paymentMethodToken'] ==
-						$oldSource->token
-					) {
+				foreach (Subscription::find()->gatewayId($this->id)->userId($subscription->userId)->isCanceled(0)->reference(['not', $subscription->reference])->all() as $sub) {
+					if ($sub->subscriptionData['paymentMethodToken'] ==	$oldSource->token) {
 						$canDelete = false;
 					}
 				}
 				if ($canDelete) {
-					Commerce::getInstance()
-						->getPaymentSources()
-						->deletePaymentSourceById($oldSource->id);
+					Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($oldSource->id);
 				}
 			}
 		}
@@ -905,44 +816,34 @@ class Gateway extends BaseGateway
 	/**
 	 * @inheritdoc
 	 */
-	public function getBillingIssueDescription(
-		Subscription $subscription
-	): string {
+	public function getBillingIssueDescription(Subscription $subscription): string 
+	{
 		return '';
 	}
 
 	/**
 	 * @inheritdoc
 	 */
-	public function getBillingIssueResolveFormHtml(
-		Subscription $subscription
-	): string {
+	public function getBillingIssueResolveFormHtml(Subscription $subscription): string 
+	{
 		throw new NotSupportedException();
 	}
 
 	public function processWebHook(): WebResponse
 	{
-		$signature = Craft::$app
-			->getRequest()
-			->getRequiredParam('bt_signature');
+		$signature = Craft::$app->getRequest()->getRequiredParam('bt_signature');
 		$payload = Craft::$app->getRequest()->getRequiredParam('bt_payload');
 
-		$webhookNotification = $this->gateway
-			->webhookNotification()
-			->parse($signature, $payload);
+		$webhookNotification = $this->gateway->webhookNotification()->parse($signature, $payload);
 
 		switch ($webhookNotification->kind) {
 			case 'subscription_canceled':
 			case 'subscription_expired':
 			case 'subscription_went_past_due':
-				$this->_handleSubscriptionExpired(
-					$webhookNotification->subscription
-				);
+				$this->_handleSubscriptionExpired($webhookNotification->subscription);
 				break;
 			case 'subscription_charged_successfully':
-				$this->_handleSubscriptionCharged(
-					$webhookNotification->subscription
-				);
+				$this->_handleSubscriptionCharged($webhookNotification->subscription);
 				break;
 			// subscription_charged_unsuccessfully
 		}
@@ -1007,9 +908,7 @@ class Gateway extends BaseGateway
 
 	private function getPaymentSource($userId, $token = null)
 	{
-		$sources = Commerce::getInstance()
-			->getPaymentSources()
-			->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
+		$sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
 
 		if (\count($sources) === 0) {
 			return null;
@@ -1041,13 +940,9 @@ class Gateway extends BaseGateway
 
 		$orderId = $request->getParam('orderId');
 		if ($orderId) {
-			$order = Commerce::getInstance()
-				->getOrders()
-				->getOrderById($orderId);
+			$order = Commerce::getInstance()->getOrders()->getOrderById($orderId);
 		} else {
-			$order = Commerce::getInstance()
-				->getCarts()
-				->getCart();
+			$order = Commerce::getInstance()->getCarts()->getCart();
 		}
 		$params['order'] = $order;
 
@@ -1091,13 +986,9 @@ class Gateway extends BaseGateway
 
 		$orderId = $request->getParam('number');
 		if ($orderId) {
-			$order = Commerce::getInstance()
-				->getOrders()
-				->getOrderByNumber($orderId);
+			$order = Commerce::getInstance()->getOrders()->getOrderByNumber($orderId);
 		} else {
-			$order = Commerce::getInstance()
-				->getCarts()
-				->getCart();
+			$order = Commerce::getInstance()->getCarts()->getCart();
 		}
 		$params['order'] = $order;
 
@@ -1140,10 +1031,8 @@ class Gateway extends BaseGateway
 	 *
 	 * @return SubscriptionPayment
 	 */
-	private function _createSubscriptionPayment(
-		$data,
-		Currency $currency
-	): SubscriptionPayment {
+	private function _createSubscriptionPayment($data, Currency $currency): SubscriptionPayment
+	{
 		$payment = new SubscriptionPayment([
 			'paymentAmount' => $data->transactions[0]->amount,
 			'paymentCurrency' => $currency,
@@ -1165,9 +1054,7 @@ class Gateway extends BaseGateway
 	 */
 	private function _handleSubscriptionExpired($data)
 	{
-		$subscription = Subscription::find()
-			->reference($data->id)
-			->one();
+		$subscription = Subscription::find()->reference($data->id)->one();
 
 		if (!$subscription) {
 			Craft::warning(
@@ -1179,9 +1066,7 @@ class Gateway extends BaseGateway
 			return;
 		}
 
-		Commerce::getInstance()
-			->getSubscriptions()
-			->expireSubscription($subscription);
+		Commerce::getInstance()->getSubscriptions()->expireSubscription($subscription);
 	}
 
 	private function _handleSubscriptionCharged($data)
@@ -1192,31 +1077,19 @@ class Gateway extends BaseGateway
 		do {
 			// Handle cases when Braintree sends us a webhook so soon that we haven't processed the subscription that triggered the webhook
 			sleep(1);
-			$subscription = Subscription::find()
-				->reference($data->id)
-				->one();
+			$subscription = Subscription::find()->reference($data->id)->one();
 			$counter++;
 		} while (!$subscription && $counter < $limit);
 
 		if (!$subscription) {
-			throw new SubscriptionException(
-				'Subscription with the reference “' .
-					$data->id .
-					'” not found when processing braintree webhook'
-			);
+			throw new SubscriptionException('Subscription with the reference “' . $data->id . '” not found when processing braintree webhook');
 		}
 
-		$defaultPaymentCurrency = Commerce::getInstance()
-			->getPaymentCurrencies()
-			->getPrimaryPaymentCurrency();
-		$currency = Commerce::getInstance()
-			->getCurrencies()
-			->getCurrencyByIso($defaultPaymentCurrency->iso);
-		$payment = $this->_createSubscriptionPayment($data, $currency);
+		$defaultPaymentCurrency = Commerce::getInstance()->getPaymentCurrencies()->getPrimaryPaymentCurrency();
+		$currency = Commerce::getInstance()->getCurrencies()->getCurrencyByIso($defaultPaymentCurrency->iso);
+		$payment = $this->_createSubscriptionPayment($data, $currency->alphabeticCode);
 
-		Commerce::getInstance()
-			->getSubscriptions()
-			->receivePayment($subscription, $payment, $data->nextBillingDate);
+		Commerce::getInstance()->getSubscriptions()->receivePayment($subscription, $payment, $data->nextBillingDate);
 	}
 
 	private function _formatAddress($data)
@@ -1265,18 +1138,13 @@ class Gateway extends BaseGateway
 				$address->address1,
 				50
 			),
-			'extendedAddress' => StringHelper::safeTruncate(
-				$address->address2,
-				50
-			),
+			'extendedAddress' => StringHelper::safeTruncate($address->address2,50),
 			'locality' => StringHelper::safeTruncate($address->city, 50),
 			'region' => $address->state
 				? $address->state->abbreviation
 				: $address->stateName,
 			'postalCode' => $address->zipCode,
-			'countryCodeAlpha2' => $address->country
-				? $address->country->iso
-				: '',
+			'countryCodeAlpha2' => $address->country ? $address->country->iso : '',
 		];
 	}
 }
