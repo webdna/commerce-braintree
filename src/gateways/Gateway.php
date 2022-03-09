@@ -89,9 +89,17 @@ class Gateway extends BaseGateway
 
 	public $googlePayMerchantId;
 
+	public $dropinUiSdkVersion;
+
+	public $clientSdkVersion;
+
 	private $gateway;
 
 	private $customer;
+
+	const DEFAULT_DROPIN_UI_SDK_VERSION = '1.21.0';
+
+	const DEFAULT_CLIENT_SDK_VERSION = '3.52.0';
 
 	// Public Methods
 	// =========================================================================
@@ -179,13 +187,13 @@ class Gateway extends BaseGateway
 	 * @inheritdoc
 	 */
 	/*public function populateRequest(array &$request, BasePaymentForm $paymentForm = null)
-    {
-        if ($paymentForm && $paymentForm->hasProperty('nonce') && $paymentForm->nonce) {
-            $request['token'] = $paymentForm->nonce;
-        }
-        $request['merchantAccountId'] = Craft::parseEnv($this->merchantAccountId[$request['currency']]);
-        //Craft::dd($request);
-    }*/
+	{
+		if ($paymentForm && $paymentForm->hasProperty('nonce') && $paymentForm->nonce) {
+			$request['token'] = $paymentForm->nonce;
+		}
+		$request['merchantAccountId'] = Craft::parseEnv($this->merchantAccountId[$request['currency']]);
+		//Craft::dd($request);
+	}*/
 
 	public function getCustomer($user)
 	{
@@ -232,7 +240,7 @@ class Gateway extends BaseGateway
 
 	public function authorize(Transaction $transaction,BasePaymentForm $form): RequestResponseInterface
 	{
-        //Craft::dd($transaction);
+		//Craft::dd($transaction);
 		try {
 			$order = $transaction->getOrder();
 			$data = [
@@ -305,7 +313,7 @@ class Gateway extends BaseGateway
 
 	public function capture(Transaction $transaction,string $reference): RequestResponseInterface
 	{
-        //Craft::dd($transaction);
+		//Craft::dd($transaction);
 		try {
 			$result = $this->gateway
 				->transaction()
@@ -906,6 +914,39 @@ class Gateway extends BaseGateway
 		return false;
 	}
 
+	public function format3DSAddress($order)
+	{
+		if (get_class($order) == 'craft\\commerce\\models\\Address') {
+			$address = $order;
+		} else {
+			$address = $order->billingAddress ?: $order->shippingAddress;
+		}
+
+		if (!$address) {
+			return [];
+		}
+
+		return [
+			'givenName' => $address->firstName,
+			'surname' => $address->lastName,
+			'phoneNumber' => preg_replace('/[()\s-]/', '', $address->phone),
+			'streetAddress' => StringHelper::safeTruncate(
+				$address->address1,
+				50
+			),
+			'extendedAddress' => StringHelper::safeTruncate($address->address2,50),
+			'locality' => StringHelper::safeTruncate($address->city, 50),
+			'region' => $address->state
+				? $address->state->abbreviation
+				: $address->stateName,
+			'postalCode' => $address->zipCode,
+			'countryCodeAlpha2' => $address->country ? $address->country->iso : '',
+		];
+	}
+
+	// Private Methods
+	// =========================================================================
+
 	private function getPaymentSource($userId, $token = null)
 	{
 		$sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
@@ -950,11 +991,12 @@ class Gateway extends BaseGateway
 		$previousMode = $view->getTemplateMode();
 		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
+		$sdkVersion = $this->_getVersion('clientSdkVersion');
 		$view->registerJsFile(
-			'https://js.braintreegateway.com/web/3.52.0/js/client.min.js'
+			"https://js.braintreegateway.com/web/{$sdkVersion}/js/client.min.js"
 		);
 		$view->registerJsFile(
-			'https://js.braintreegateway.com/web/3.52.0/js/hosted-fields.min.js'
+			"https://js.braintreegateway.com/web/{$sdkVersion}/js/hosted-fields.min.js"
 		);
 		$view->registerAssetBundle(HostedFieldsAsset::class);
 		$html = $view->renderTemplate(
@@ -996,8 +1038,9 @@ class Gateway extends BaseGateway
 		$previousMode = $view->getTemplateMode();
 		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
+		$sdkVersion = $this->_getVersion('dropinUiSdkVersion');
 		$view->registerJsFile(
-			'https://js.braintreegateway.com/web/dropin/1.21.0/js/dropin.min.js'
+			"https://js.braintreegateway.com/web/dropin/{$sdkVersion}/js/dropin.min.js"
 		);
 		$view->registerAssetBundle(DropinUiAsset::class);
 		$html = $view->renderTemplate(
@@ -1118,33 +1161,13 @@ class Gateway extends BaseGateway
 		];
 	}
 
-	public function format3DSAddress($order)
+	private function _getVersion(string $sdkVersion): string
 	{
-		if (get_class($order) == 'craft\\commerce\\models\\Address') {
-			$address = $order;
-		} else {
-			$address = $order->billingAddress ?: $order->shippingAddress;
+		if (!$this->$sdkVersion) {
+			$constant = StringHelper::toUpperCase(StringHelper::toSnakeCase($sdkVersion));
+			return constant("self::DEFAULT_{$constant}");
 		}
 
-		if (!$address) {
-			return [];
-		}
-
-		return [
-			'givenName' => $address->firstName,
-			'surname' => $address->lastName,
-			'phoneNumber' => preg_replace('/[()\s-]/', '', $address->phone),
-			'streetAddress' => StringHelper::safeTruncate(
-				$address->address1,
-				50
-			),
-			'extendedAddress' => StringHelper::safeTruncate($address->address2,50),
-			'locality' => StringHelper::safeTruncate($address->city, 50),
-			'region' => $address->state
-				? $address->state->abbreviation
-				: $address->stateName,
-			'postalCode' => $address->zipCode,
-			'countryCodeAlpha2' => $address->country ? $address->country->iso : '',
-		];
+		return trim(str_replace('v', '', Craft::parseEnv($this->$sdkVersion)));
 	}
 }
