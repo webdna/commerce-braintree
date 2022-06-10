@@ -2,7 +2,7 @@
 	"name": "kuriousagency/commerce-braintree",
 	"description": "Braintree gateway for Craft Commerce",
 	"type": "craft-plugin",
-	"version": "2.4.2",
+	"version": "2.4.3",
 	"keywords": [
 		"craft",
 		"cms",
@@ -13,8 +13,8 @@
 	"license": "proprietary",
 	"authors": [
 		{
-			"name": "Kurious Agency",
-			"homepage": "https://kurious.agency"
+			"name": "WebDNA",
+			"homepage": "https://webdna.co.uk"
 		}
 	],
 	"require": {
