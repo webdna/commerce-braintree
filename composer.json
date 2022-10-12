@@ -10,6 +10,10 @@
 		"craft-plugin",
 		"commerce braintree"
 	],
+	"support": {
+		"docs": "https://github.com/webdna/commerce-braintree/blob/master/README.md",
+		"issues": "https://github.com/webdna/commerce-braintree/issues"
+	},
 	"license": "proprietary",
 	"authors": [
 		{
