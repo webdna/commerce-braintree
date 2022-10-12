@@ -8,13 +8,14 @@
  * @copyright Copyright (c) 2019 Kurious Agency
  */
 
-namespace kuriousagency\commerce\braintree\controllers;
+namespace webdna\commerce\braintree\controllers;
 
 use Craft;
 use craft\web\Controller;
 
 use craft\commerce\elements\Subscription;
 use craft\commerce\Plugin as Commerce;
+use yii\web\Response;
 
 /**
  * @author    Kurious Agency
@@ -24,7 +25,7 @@ use craft\commerce\Plugin as Commerce;
 class SubscriptionsController extends Controller
 {
 
-	public function actionUpdatePayment()
+	public function actionUpdatePayment(): Response
 	{
 		
 		$request = Craft::$app->getRequest();

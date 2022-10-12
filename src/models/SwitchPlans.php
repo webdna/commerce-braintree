@@ -8,9 +8,9 @@
  * @copyright Copyright (c) 2018 Kurious Agency
  */
 
-namespace kuriousagency\commerce\braintree\models;
+namespace webdna\commerce\braintree\models;
 
-use kuriousagency\commerce\braintree\Braintree;
+use webdna\commerce\braintree\Braintree;
 
 use craft\commerce\models\subscriptions\SwitchPlansForm;
 

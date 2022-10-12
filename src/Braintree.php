@@ -8,22 +8,27 @@
  * @copyright Copyright (c) 2018 Kurious Agency
  */
 
-namespace kuriousagency\commerce\braintree;
+namespace webdna\commerce\braintree;
 
-use kuriousagency\commerce\braintree\models\Settings;
-use kuriousagency\commerce\braintree\assetbundles\dropinui\DropinUiAsset;
-use kuriousagency\commerce\braintree\gateways\Gateway;
+use webdna\commerce\braintree\models\Settings;
+use webdna\commerce\braintree\assetbundles\dropinui\DropinUiAsset;
+use webdna\commerce\braintree\gateways\Gateway;
+use webdna\commerce\braintree\services\BraintreeService;
 
 use Braintree as BT;
 
 use Craft;
 use craft\base\Plugin;
+use craft\base\Model;
 use craft\services\Plugins;
 use craft\events\PluginEvent;
 use craft\commerce\services\Gateways;
 use craft\events\RegisterComponentTypesEvent;
-use craft\log\FileTarget;
+
 use yii\log\Logger;
+use craft\log\MonologTarget;
+use Monolog\Formatter\LineFormatter;
+
 use yii\base\Event;
 
 require_once __DIR__ . '/assetbundles/dropinui/DropinUiAsset.php';
@@ -53,7 +58,17 @@ class Braintree extends Plugin
 	/**
 	 * @var string
 	 */
-	public $schemaVersion = '1.0.0';
+	public string $schemaVersion = '1.0.0';
+	
+	/**
+	 * @var bool
+	 */
+	public bool $hasCpSettings = false;
+	
+	/**
+	 * @var bool
+	 */
+	public bool $hasCpSection = false;
 
 	// Public Methods
 	// =========================================================================
@@ -65,6 +80,10 @@ class Braintree extends Plugin
 	{
 		parent::init();
 		self::$plugin = $this;
+			
+		$this->setComponents([
+			'braintreeService' => BraintreeService::class,
+		]);
 
 		Event::on(
 			Gateways::class,
@@ -83,9 +102,17 @@ class Braintree extends Plugin
 			}
 		);
 
-		Craft::getLogger()->dispatcher->targets[] = new FileTarget([
-			'logFile' => Craft::getAlias('@storage/logs/braintree.log'),
+		Craft::getLogger()->dispatcher->targets[] = new MonologTarget([
+			'name' => 'braintree',
 			'categories' => ['braintree'],
+			'level' => Logger::LEVEL_INFO,
+			'logContext' => false,
+			'allowLineBreaks' => true,
+			'formatter' => new LineFormatter(
+				format: "%datetime% %message%\n",
+				dateFormat: 'Y-m-d H:i:s',
+				allowInlineLineBreaks: true,
+			),
 		]);
 
 		Craft::info(
@@ -112,7 +139,7 @@ class Braintree extends Plugin
 	/**
 	 * @inheritdoc
 	 */
-	protected function createSettingsModel()
+	protected function createSettingsModel(): ?Model
 	{
 		return new Settings();
 	}

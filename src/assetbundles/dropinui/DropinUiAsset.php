@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2018 Kurious Agency
  */
 
-namespace kuriousagency\commerce\braintree\assetbundles\dropinui;
+namespace webdna\commerce\braintree\assetbundles\dropinui;
 
 use Craft;
 use craft\web\AssetBundle;

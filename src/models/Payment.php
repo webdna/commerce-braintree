@@ -8,9 +8,9 @@
  * @copyright Copyright (c) 2018 Kurious Agency
  */
 
-namespace kuriousagency\commerce\braintree\models;
+namespace webdna\commerce\braintree\models;
 
-use kuriousagency\commerce\braintree\Braintree;
+use webdna\commerce\braintree\Braintree;
 use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\models\PaymentSource;
 
@@ -43,7 +43,7 @@ class Payment extends BasePaymentForm
     /**
      * @inheritdoc
      */
-    public function populateFromPaymentSource(PaymentSource $paymentSource)
+    public function populateFromPaymentSource(PaymentSource $paymentSource): void
     {
 		$this->token = $paymentSource->token;
     }

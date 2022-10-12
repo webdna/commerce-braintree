@@ -15,7 +15,7 @@ This plugin provides a [Braintree](https://www.braintreegateway.com) integration
 
 ## Requirements
 
-This plugin requires Craft Commerce 2.0.0-alpha.5 or later.
+This plugin requires Craft Commerce 4.0 or later.
 
 ## Installation
 
@@ -34,10 +34,10 @@ Open your terminal and run the following commands:
 cd /path/to/my-project.test
 
 # tell Composer to load the plugin
-composer require kuriousagency/commerce-braintree
+composer require webdna/commerce-braintree
 
 # tell Craft to install the plugin
-./craft install/plugin commerce-braintree
+./craft plugin/install commerce-braintree
 ```
 
 ## Setup
@@ -109,11 +109,4 @@ Trial days are setup as part of the plan within Braintree.
 
 If this parameter is set to true, the subscription switch will be prorated.
 
-## Commerce Braintree Roadmap
 
-Some things to do, and ideas for potential features:
-
--   Show discounts
--   Support Add-ons
-
-Brought to you by [Kurious Agency](https://kurious.agency)

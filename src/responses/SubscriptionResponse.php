@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2018 Kurious Agency
  */
 
-namespace kuriousagency\commerce\braintree\responses;
+namespace webdna\commerce\braintree\responses;
 
 use Craft;
 use craft\commerce\base\SubscriptionResponseInterface;
@@ -21,13 +21,13 @@ class SubscriptionResponse implements SubscriptionResponseInterface
     /**
      * @var
      */
-    protected $data = [];
+    protected array $data = [];
     /**
      * Response constructor.
      *
      * @param $data
      */
-    public function __construct($data)
+    public function __construct(array $data)
     {
         $this->data = $data;
     }
@@ -44,7 +44,7 @@ class SubscriptionResponse implements SubscriptionResponseInterface
     /**
      * @inheritdoc
      */
-    public function getData()
+    public function getData(): mixed
     {
 		return json_encode($this->data);
     }

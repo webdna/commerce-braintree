@@ -28,11 +28,11 @@
 			
 			if ($form.find('[data-bt-hostedFields]')[0]) {
 
-				var $token = $form.find('[name="gatewayToken"]'),
-					$nonce = $form.find('[name="nonce"]'),
-					$amount = $form.find('[name="amount"]'),
-					$currency = $form.find('[name="currency"]'),
-					$submit = $form.find('input[type="submit"]');
+				var $token = $form.find('[name*="gatewayToken"]'),
+					$nonce = $form.find('[name*="nonce"]'),
+					$amount = $form.find('[name*="amount"]'),
+					$currency = $form.find('[name*="currency"]'),
+					$submit = $form.find('input[type*="submit"]');
 
 					braintree.client.create(
 						{
@@ -100,7 +100,7 @@
 					return;
 				}
 
-				$form.find('input[name=nonce]').val(payload.nonce);
+				$form.find('input[name*=nonce]').val(payload.nonce);
 				$form.off('submit', formSubmit);
 				$form[0].submit();
 			});

@@ -22,12 +22,12 @@
 	function init($) {
 		$('form').each(function() {
 			var $form = $(this),
-				$token = $form.find('[name="gatewayToken"]'),
-				$nonce = $form.find('[name="nonce"]'),
-				amount = $form.find('[name="amount"]').val(),
-				currency = $form.find('[name="currency"]').val(),
-				email = $form.find('[name="email"]').val(),
-				address = $form.find('[name="address"]').val(),
+				$token = $form.find('[name*="gatewayToken"]'),
+				$nonce = $form.find('[name*="nonce"]'),
+				amount = $form.find('[name*="amount"]').val(),
+				currency = $form.find('[name*="currency"]').val(),
+				email = $form.find('[name*="email"]').val(),
+				address = $form.find('[name*="address"]').val(),
 				$dropinUi = $form.find('[data-id="dropInUi"]'),
 				$submit = $form.find('button[type="submit"]');
 
@@ -162,7 +162,7 @@
 			//console.log(payload);
 			if ((payload.liabilityShiftPossible && payload.liabilityShifted) || !payload.liabilityShiftPossible || payload.type !== 'CreditCard' || !threeDSecure) {
 				processing($submit);
-				$form.find('input[name=nonce]').val(payload.nonce);
+				$form.find('input[name*=nonce]').val(payload.nonce);
 				$form.off('submit', formSubmit);
 				$form.trigger('submit');
 			} else {

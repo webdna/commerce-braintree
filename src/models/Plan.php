@@ -8,9 +8,9 @@
  * @copyright Copyright (c) 2018 Kurious Agency
  */
 
-namespace kuriousagency\commerce\braintree\models;
+namespace webdna\commerce\braintree\models;
 
-use kuriousagency\commerce\braintree\Braintree;
+use webdna\commerce\braintree\Braintree;
 
 use craft\commerce\base\Plan as BasePlan;
 use craft\commerce\base\PlanInterface;
@@ -47,12 +47,12 @@ class Plan extends BasePlan
 		return $this->_getData()->currencyIsoCode;
 	}
 
-	public function getFrequency()
+	public function getFrequency(): mixed
 	{
 		return $this->_getData()->billingFrequency;
 	}
 
-	public function getDiscounts()
+	public function getDiscounts(): mixed
 	{
 		return $this->_getData()->discounts;
 	}
@@ -68,7 +68,7 @@ class Plan extends BasePlan
 		return $this->_getData()->trialDuration.' '.$this->_getData()->trialDurationUnit.' trial';
 	}
 
-	private function _getData()
+	private function _getData(): mixed
 	{
 		return (object)Json::decode($this->planData);
 	}

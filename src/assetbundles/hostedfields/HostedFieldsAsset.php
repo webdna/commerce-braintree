@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2018 Kurious Agency
  */
 
-namespace kuriousagency\commerce\braintree\assetbundles\hostedfields;
+namespace webdna\commerce\braintree\assetbundles\hostedfields;
 
 use Craft;
 use craft\web\AssetBundle;

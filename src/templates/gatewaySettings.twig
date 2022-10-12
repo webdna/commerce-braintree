@@ -13,14 +13,14 @@
  */
 #}
 
-{% from "_includes/forms" import autosuggestField, lightswitchField %}
+{% from "_includes/forms" import autosuggestField, lightswitchField, booleanMenuField %}
 
 {{ autosuggestField({
     label: 'Merchant ID'|t('commerce'),
     id: 'merchantId',
     class: 'ltr',
     name: 'merchantId',
-    value: gateway.merchantId,
+    value: gateway.getMerchantId(false),
     errors: gateway.getErrors('merchantId'),
 	suggestEnvVars: true,
 	required: true,
@@ -31,7 +31,7 @@
     id: 'publicKey',
     class: 'ltr',
     name: 'publicKey',
-    value: gateway.publicKey,
+    value: gateway.getPublicKey(false),
     errors: gateway.getErrors('publicKey'),
 	suggestEnvVars: true,
 	required: true,
@@ -42,7 +42,7 @@
     id: 'privateKey',
     class: 'ltr',
     name: 'privateKey',
-    value: gateway.privateKey,
+    value: gateway.getPrivateKey(false),
     errors: gateway.getErrors('privateKey'),
 	suggestEnvVars: true,
 	required: true,
@@ -54,15 +54,17 @@
     id: 'googlePayMerchantId',
     class: 'ltr',
     name: 'googlePayMerchantId',
-    value: gateway.googlePayMerchantId,
+    value: gateway.getGooglePayMerchantId(false),
     errors: gateway.getErrors('googlePayMerchantId'),
 	suggestEnvVars: true,
 }) }}
 
-{{ lightswitchField({
+
+{{ booleanMenuField({
      label: "Test mode?"|t('commerce'),
      name: 'testMode',
-     on: gateway.testMode,
+     value: gateway.getTestMode(false),
+     includeEnvVars: true,
      errors: gateway.getErrors('testMode'),
 }) }}
 
@@ -73,8 +75,8 @@
 {{ autosuggestField({
     label: currency.iso~' Merchant Account ID'|t('commerce'),
     class: 'ltr',
-    name: 'merchantAccountId['~currency.iso~']',
-    value: gateway.merchantAccountId[currency.iso] ?? null,
+    name: 'merchantAccountIds['~currency.iso~']',
+    value: gateway.getMerchantAccountId(currency.iso, false),
 	suggestEnvVars: true,
 	required: true,
 }) }}
