@@ -11,8 +11,8 @@
 		"commerce braintree"
 	],
 	"support": {
-		"docs": "https://github.com/webdna/commerce-braintree/blob/master/README.md",
-		"issues": "https://github.com/webdna/commerce-braintree/issues"
+		"docs": "https://github.com/webdna/commerce-braintree",
+		"issues": "https://github.com/webdna/commerce-braintree/issues?state=open"
 	},
 	"license": "proprietary",
 	"authors": [
