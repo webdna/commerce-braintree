@@ -333,21 +333,16 @@ class Gateway extends BaseGateway
 				'options' => ['submitForSettlement' => false],
 			];
 
-			if ($order->user) {
-				if ($this->getCustomer($order->user)) {
-					$data['customerId'] = $order->user->uid;
-				} else {
-					$data['customer'] = [
-						'firstName' => $order->user->firstName,
-						'lastName' => $order->user->lastName,
-						'email' => $order->email,
-					];
-				}
-			} else {
-				$data['customer'] = [
-					'email' => $order->email,
-				];
-			}
+            $user = $order->getCustomer();
+            if ($this->getCustomer($user)) {
+                $data['customerId'] = $user->uid;
+            } else {
+                $data['customer'] = [
+                    'firstName' => $user->firstName,
+                    'lastName' => $user->lastName,
+                    'email' => $user->email,
+                ];
+            }
 
 			// deviceData
 
@@ -465,21 +460,16 @@ class Gateway extends BaseGateway
 				'options' => ['submitForSettlement' => true],
 			];
 
-			if ($order->user) {
-				if ($this->getCustomer($order->user)) {
-					$data['customerId'] = $order->user->uid;
-				} else {
-					$data['customer'] = [
-						'firstName' => $order->user->firstName,
-						'lastName' => $order->user->lastName,
-						'email' => $order->email,
-					];
-				}
-			} else {
-				$data['customer'] = [
-					'email' => $order->email,
-				];
-			}
+            $user = $order->getCustomer();
+            if ($this->getCustomer($user)) {
+                $data['customerId'] = $user->uid;
+            } else {
+                $data['customer'] = [
+                    'firstName' => $user->firstName,
+                    'lastName' => $user->lastName,
+                    'email' => $user->email,
+                ];
+            }
 
 			// deviceData
 
