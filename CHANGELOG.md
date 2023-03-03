@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.0.0-beta.4 - 2023-03-03
+### Fixed
+- data type issues
+- multiple form issues
+- fixed no jquery changes
+
+### Changed
+- Updated submit button dataset to allow html not just text
+
 ## 3.0.0-beta.3 - 2023-01-30
 ### Changed
 - Updated data type

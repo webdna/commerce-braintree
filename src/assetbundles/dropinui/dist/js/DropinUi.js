@@ -23,17 +23,18 @@
 		document.querySelectorAll('form').forEach(function($form) {
 			var $token = $form.querySelector('[name*="gatewayToken"]'),
 				$nonce = $form.querySelector('[name*="nonce"]'),
-				amount = $form.querySelector('[name*="amount"]').value,
-				currency = $form.querySelector('[name*="currency"]').value,
-				email = $form.querySelector('[name*="email"]').value,
-				address = $form.querySelector('[name*="address"]').value,
+				amount = $form.querySelector('[name*="amount"]')?.value,
+				currency = $form.querySelector('[name*="currency"]')?.value,
+				email = $form.querySelector('[name*="email"]')?.value,
+				address = $form.querySelector('[name*="address"]')?.value,
 				$dropinUi = $form.querySelector('[data-id="dropInUi"]'),
 				$submit = $form.querySelector('button[type="submit"]');
 
 			if ($dropinUi) {
-				$submit.dataset.text = $submit.innerText;
+				$submit.dataset.text = $submit.innerHTML;
 				if ($submit.dataset.loading) {
-					$submit.dataset.text = $submit.dataset.loading;
+					$submit.disabled = true;
+					$submit.innerHTML = $submit.dataset.loading;
 				}
 
 				var options = {
@@ -105,6 +106,8 @@
 						}
 						return;
 					}
+					
+					$submit.innerHTML = $submit.dataset.text;
 
 					if (dropinInstance.isPaymentMethodRequestable()) {
 						reset($submit);
@@ -161,7 +164,7 @@
 			//console.log(payload);
 			if ((payload.liabilityShiftPossible && payload.liabilityShifted) || !payload.liabilityShiftPossible || payload.type !== 'CreditCard' || !threeDSecure) {
 				processing($submit);
-				$form.querySelector('input[name*=nonce]').val(payload.nonce);
+				$form.querySelector('input[name*=nonce]').value = payload.nonce;
 				$form.removeEventListener('submit', formSubmit);
 				$form.submit();
 			} else {
@@ -176,12 +179,12 @@
 	}
 	function reset($button) {
 		$button.disabled = false;
-		$button.innerText = $button.dataset.text;
+		$button.innerHTML = $button.dataset.text;
 	}
 	function processing($button) {
 		$button.disabled = true;
 		if ($button.dataset.processing) {
-			$button.innerText = $button.dataset.processing;
+			$button.innerHTML = $button.dataset.processing;
 		}
 	}
 })();

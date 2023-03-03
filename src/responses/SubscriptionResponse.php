@@ -21,13 +21,13 @@ class SubscriptionResponse implements SubscriptionResponseInterface
     /**
      * @var
      */
-    protected array $data = [];
+    protected object $data;
     /**
      * Response constructor.
      *
      * @param $data
      */
-    public function __construct(array $data)
+    public function __construct(object $data)
     {
         $this->data = $data;
     }
