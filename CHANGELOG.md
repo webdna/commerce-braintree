@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Changed
 - order.user => order.customer
 
+### Added
+- Ability to specify SDK versions
+
 ## 3.0.0-beta.5 - 2023-03-08
 ### Fixed
 - js form submission
