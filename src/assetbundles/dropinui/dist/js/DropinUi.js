@@ -123,9 +123,7 @@
 						//$submit.prop('disabled', false);
 					});
 
-					$form.addEventListener(
-						'submit',
-						{
+					$form.addEventListener('submit', formSubmit.bind({
 							dropinInstance: dropinInstance,
 							threeDSecure: $dropinUi.dataset.threedsecure,
 							options: {
@@ -135,8 +133,7 @@
 									billingAddress: address ? JSON.parse(address) : address
 								}
 							}
-						},
-						formSubmit
+						})
 					);
 				});
 			}
@@ -146,13 +143,13 @@
 	function formSubmit(e) {
 		e.preventDefault();
 		//console.log(e)
-		var dropinInstance = e.data.dropinInstance,
+		var dropinInstance = this.dropinInstance,
 			$form = e.currentTarget,
-			threeDSecure = e.data.threeDSecure,
+			threeDSecure = this.threeDSecure,
 			$submit = $form.querySelector('button[type="submit"]');
 		processing($submit);
 
-		dropinInstance.requestPaymentMethod(threeDSecure ? e.data.options : {}, function(err, payload) {
+		dropinInstance.requestPaymentMethod(threeDSecure ? this.options : {}, function(err, payload) {
 			if (err) {
 				console.error(err);
 				if (window.braintreeError) {
