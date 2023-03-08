@@ -93,6 +93,10 @@ class Gateway extends BaseGateway
 	private ?Braintree\Gateway $gateway = null;
 
 	private ?User $customer = null;
+	
+	private string $_dropinUiSDKVersion = '1.21.0';
+	
+	private string $_clientSDKVersion = '3.52.0';
 
 	// Public Methods
 	// =========================================================================
@@ -129,6 +133,8 @@ class Gateway extends BaseGateway
 		$settings['testMode'] = $this->getTestMode(false);
 		$settings['merchantAccountIds'] = $this->_merchantAccountIds;
 		$settings['googlePayMerchantId'] = $this->getGooglePayMerchantId(false);
+		$settings['dropinUiSDKVersion'] = $this->getDropinUiSDKVersion(false);
+		$settings['clientSDKVersion'] = $this->getClientSDKVersion(false);
 		
 		return $settings;
 	}
@@ -210,6 +216,27 @@ class Gateway extends BaseGateway
 	}
 	
 	
+	public function getDropinUiSDKVersion(bool $parse = true): ?string
+	{
+		return $parse ? App::parseEnv($this->_dropinUiSDKVersion) : $this->_dropinUiSDKVersion;
+	}
+	
+	public function setDropinUiSDKVersion(?string $version): void
+	{
+		$this->_dropinUiSDKVersion = $version;
+	}
+	
+	public function getClientSDKVersion(bool $parse = true): ?string
+	{
+		return $parse ? App::parseEnv($this->_clientSDKVersion) : $this->_clientSDKVersion;
+	}
+	
+	public function setClientSDKVersion(?string $version): void
+	{
+		$this->_clientSDKVersion = $version;
+	}
+	
+	
 	
 	
 
@@ -271,13 +298,13 @@ class Gateway extends BaseGateway
 	 * @inheritdoc
 	 */
 	/*public function populateRequest(array &$request, BasePaymentForm $paymentForm = null)
-    {
-        if ($paymentForm && $paymentForm->hasProperty('nonce') && $paymentForm->nonce) {
-            $request['token'] = $paymentForm->nonce;
-        }
-        $request['merchantAccountId'] = Craft::parseEnv($this->merchantAccountId[$request['currency']]);
-        //Craft::dd($request);
-    }*/
+	{
+		if ($paymentForm && $paymentForm->hasProperty('nonce') && $paymentForm->nonce) {
+			$request['token'] = $paymentForm->nonce;
+		}
+		$request['merchantAccountId'] = Craft::parseEnv($this->merchantAccountId[$request['currency']]);
+		//Craft::dd($request);
+	}*/
 
 	public function getCustomer($user): ?User
 	{
@@ -324,7 +351,7 @@ class Gateway extends BaseGateway
 
 	public function authorize(Transaction $transaction,BasePaymentForm $form): RequestResponseInterface
 	{
-        //Craft::dd($transaction);
+		//Craft::dd($transaction);
 		try {
 			$order = $transaction->getOrder();
 			$data = [
@@ -333,13 +360,13 @@ class Gateway extends BaseGateway
 				'options' => ['submitForSettlement' => false],
 			];
 
-			if ($order->user) {
-				if ($this->getCustomer($order->user)) {
-					$data['customerId'] = $order->user->uid;
+			if ($order->customer) {
+				if ($this->getCustomer($order->customer)) {
+					$data['customerId'] = $order->customer->uid;
 				} else {
 					$data['customer'] = [
-						'firstName' => $order->user->firstName,
-						'lastName' => $order->user->lastName,
+						'firstName' => $order->customer->firstName,
+						'lastName' => $order->customer->lastName,
 						'email' => $order->email,
 					];
 				}
@@ -391,7 +418,7 @@ class Gateway extends BaseGateway
 
 	public function capture(Transaction $transaction,string $reference): RequestResponseInterface
 	{
-        //Craft::dd($transaction);
+		//Craft::dd($transaction);
 		try {
 			$result = $this->gateway->transaction()->submitForSettlement($reference);
 			return new PaymentResponse($result);
@@ -465,13 +492,13 @@ class Gateway extends BaseGateway
 				'options' => ['submitForSettlement' => true],
 			];
 
-			if ($order->user) {
-				if ($this->getCustomer($order->user)) {
-					$data['customerId'] = $order->user->uid;
+			if ($order->customer) {
+				if ($this->getCustomer($order->customer)) {
+					$data['customerId'] = $order->customer->uid;
 				} else {
 					$data['customer'] = [
-						'firstName' => $order->user->firstName,
-						'lastName' => $order->user->lastName,
+						'firstName' => $order->customer->firstName,
+						'lastName' => $order->customer->lastName,
 						'email' => $order->email,
 					];
 				}
@@ -987,8 +1014,8 @@ class Gateway extends BaseGateway
 		$previousMode = $view->getTemplateMode();
 		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-		$view->registerJsFile('https://js.braintreegateway.com/web/3.52.0/js/client.min.js');
-		$view->registerJsFile('https://js.braintreegateway.com/web/3.52.0/js/hosted-fields.min.js');
+		$view->registerJsFile("https://js.braintreegateway.com/web/{$this->getClientSDKVersion()}/js/client.min.js");
+		$view->registerJsFile("https://js.braintreegateway.com/web/{$this->getClientSDKVersion()}/js/hosted-fields.min.js");
 		$view->registerAssetBundle(HostedFieldsAsset::class);
 		$html = $view->renderTemplate('commerce-braintree/paymentForms/hosted-fields', $params);
 
@@ -1026,7 +1053,7 @@ class Gateway extends BaseGateway
 		$previousMode = $view->getTemplateMode();
 		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-		$view->registerJsFile('https://js.braintreegateway.com/web/dropin/1.21.0/js/dropin.min.js');
+		$view->registerJsFile("https://js.braintreegateway.com/web/dropin/{$this->getDropinUiSDKVersion()}/js/dropin.min.js");
 		$view->registerAssetBundle(DropinUiAsset::class);
 		$html = $view->renderTemplate('commerce-braintree/paymentForms/dropin-ui', $params);
 

@@ -82,3 +82,28 @@
 }) }}
 {% endfor %}
 {# {% endif %} #}
+
+<hr>
+<a class="fieldtoggle" data-target="advanced">{{ "Advanced"|t('app') }}</a>
+<div id="advanced" class="hidden">
+    {{ autosuggestField({
+        label: 'Drop-in UI SDK Version'|t('commerce-braintree'),
+        instructions: 'SDK version used for drop-in UI on site front end. Most recent versions are listed in the [GitHub repository](https://github.com/braintree/braintree-web-drop-in/tags).',
+        id: 'dropinUiSDKVersion',
+        class: 'ltr',
+        name: 'dropinUiSDKVersion',
+        value: gateway.getDropinUiSDKVersion(false),
+        errors: gateway.getErrors('dropinUiSDKVersion'),
+        suggestEnvVars: true
+    }) }}
+    {{ autosuggestField({
+        label: 'Client SDK Version'|t('commerce-braintree'),
+        instructions: 'SDK version used for hosted fields in the control panel. Most recent versions are listed in the [GitHub repository](https://github.com/braintree/braintree-web/tags).',
+        id: 'clientSDKVersion',
+        class: 'ltr',
+        name: 'clientSDKVersion',
+        value: gateway.getClientSDKVersion(false),
+        errors: gateway.getErrors('clientSDKVersion'),
+        suggestEnvVars: true
+    }) }}
+</div>
