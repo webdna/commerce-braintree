@@ -195,7 +195,7 @@
 					shippingMethod = this.handle;
 				}
 			})
-			params.append('shippingMethodHandle', shippingMethod || orderData.shippingOptions[0].handle);
+			params.append('shippingMethodHandle', shippingMethod || '');
 		}
 		if (data.email) {	
 			params.append('email', data.email);
@@ -221,7 +221,7 @@
 			  options.push({
 				  identifier: availableOptions[prop].handle,
 				  label: availableOptions[prop].name,
-				  detail: 'Call us for Expedited Domestic Shipping Rates',
+				  detail: '',
 				  amount: availableOptions[prop].price,
 				  selected: availableOptions[prop].handle == selected,
 			  })

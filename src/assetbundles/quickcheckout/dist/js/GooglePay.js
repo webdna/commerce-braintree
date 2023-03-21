@@ -223,7 +223,6 @@
 			  })
 		  }
 		  return {
-			  defaultSelectedOptionId: options[0].id,
 			  shippingOptions: options
 		  };
 	}
