@@ -14,6 +14,8 @@ use webdna\commerce\braintree\Braintree as BT;
 
 use webdna\commerce\braintree\assetbundles\dropinui\DropinUiAsset;
 use webdna\commerce\braintree\assetbundles\hostedfields\HostedFieldsAsset;
+use webdna\commerce\braintree\assetbundles\quickcheckout\GooglePayAsset;
+use webdna\commerce\braintree\assetbundles\quickcheckout\ApplePayAsset;
 use webdna\commerce\braintree\models\Payment;
 use webdna\commerce\braintree\models\CancelSubscription;
 use webdna\commerce\braintree\models\Plan;
@@ -94,9 +96,9 @@ class Gateway extends BaseGateway
 
 	private ?User $customer = null;
 	
-	private string $_dropinUiSDKVersion = '1.21.0';
+	private string $_dropinUiSDKVersion = '1.34.0';
 	
-	private string $_clientSDKVersion = '3.52.0';
+	private string $_clientSDKVersion = '3.91.0';
 
 	// Public Methods
 	// =========================================================================
@@ -1061,6 +1063,53 @@ class Gateway extends BaseGateway
 
 		return TemplateHelper::raw($html);
 	}
+	
+	public function getQuickCheckoutHtml(array $params = []): string
+	{
+		$request = Craft::$app->getRequest();
+	
+		$params = array_merge(
+			[
+				'gateway' => $this,
+				'paymentForm' => $this->getPaymentFormModel(),
+				'googlePayMerchantId' => $this->getGooglePayMerchantId(),
+				'testMode' => $this->getTestMode(),
+			],
+			$params
+		);
+	
+		$orderId = $request->getParam('number');
+		if ($orderId) {
+			$order = Commerce::getInstance()->getOrders()->getOrderByNumber($orderId);
+		} else {
+			$order = Commerce::getInstance()->getCarts()->getCart();
+		}
+		$params['order'] = $order;
+	
+		$view = Craft::$app->getView();
+		$previousMode = $view->getTemplateMode();
+		$view->setTemplateMode(View::TEMPLATE_MODE_CP);
+		
+		$view->registerJsFile("https://js.braintreegateway.com/web/{$this->getClientSDKVersion()}/js/client.min.js");
+		
+		if ($params['googlePay'] ?? null) {
+			$view->registerJsFile("https://pay.google.com/gp/p/js/pay.js");
+			$view->registerJsFile("https://js.braintreegateway.com/web/{$this->getClientSDKVersion()}/js/google-payment.min.js");
+			$view->registerAssetBundle(GooglePayAsset::class);
+		}
+		if ($params['applePay'] ?? null) {
+			$view->registerJsFile("https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js");
+			$view->registerJsFile("https://js.braintreegateway.com/web/{$this->getClientSDKVersion()}/js/apple-pay.min.js");
+			$view->registerAssetBundle(ApplePayAsset::class);
+		}
+		
+		$html = $view->renderTemplate('commerce-braintree/paymentForms/quick-checkout', $params);
+	
+		$view->setTemplateMode($previousMode);
+	
+		return TemplateHelper::raw($html);
+	}
+	
 
 	private function isPaid($status): bool
 	{

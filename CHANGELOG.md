@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.0.0-beta.7 - 2023-03-21
+### Changed
+- updated dropinUI sdk to 1.34.0
+- updated client sdk to 3.91.0
+
+### Added
+- NEW quick checkout ability for applePay and googlePay
+
 ## 3.0.0-beta.6 - 2023-03-08
 ### Changed
 - order.user => order.customer

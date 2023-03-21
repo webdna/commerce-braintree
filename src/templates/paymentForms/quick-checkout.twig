@@ -1,0 +1,38 @@
+
+<input type="hidden" name="gatewayToken" value="{{ gateway.getToken() }}" />
+<input type="hidden" name="nonce" value="" />
+
+<script>
+	var orderData = {
+		store: '{{ currentSite.name }}',
+		CSRF: '{{ craft.app.request.getCsrfToken() }}',
+		token: '{{ gateway.getToken(null, order.paymentCurrency) }}',
+		amount: '{{ order.outstandingBalance }}',
+		currency: '{{ order.paymentCurrency }}',
+		itemSubtotal: '{{ order.itemSubtotal }}',
+		total: '{{ order.total }}',
+		totalTax: '{{ order.totalTax }}',
+		totalShippingCost: '{{ order.totalShippingCost }}',
+		allowedCountryCodes: {{ raw(craft.commerce.store.store.countriesList|keys|json_encode) }},
+		shippingMethodHandle: '{{ order.shippingMethod.handle ?? order.availableShippingMethodOptions|first.handle ?? '' }}',
+		shippingOptions: [
+			{%- for handle, method in order.availableShippingMethodOptions %}
+			{
+				handle: '{{ handle }}',
+				name: '{{ method.name }} - {{ method.priceForOrder(order)|currency(order.currency) }}',
+				priceAsCurrency: '{{ method.priceForOrder(order)|currency(order.currency) }}',
+				price: '{{ method.priceForOrder(order) }}',
+				selected: {{ handle == order.shippingMethodHandle ? 1 : 0 }},
+			}{{ not loop.last ? ',' }}
+			{% endfor -%}
+		]
+	}
+</script>
+
+{% if googlePay ?? false %}
+<div data-id="google-pay" style="display:none;" data-google-pay-id="{{ googlePayMerchantId }}" data-env="{{ testMode ? 'TEST' : 'PRODUCTION' }}"></div>
+{% endif %}
+{% if applePay ?? false %}
+<apple-pay-button data-id="apple-pay" style="display:none;" buttonstyle="black" type="check-out" locale="{{ currentSite.locale }}"></apple-pay-button>
+{% endif %}
+
