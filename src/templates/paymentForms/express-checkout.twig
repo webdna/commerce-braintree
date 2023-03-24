@@ -31,9 +31,9 @@
 
 <div class="express-checkout-buttons">
 	{% if googlePay ?? false %}
-	<div data-id="google-pay" style="display:none;" data-google-pay-id="{{ googlePayMerchantId }}" data-env="{{ testMode ? 'TEST' : 'PRODUCTION' }}" data-type="{{ google.type ?? 'plain' }}" data-color="{{ google.color ?? 'default' }}" data-locale="{{ currentSite.locale|split('-')|first }}"></div>
+	<div data-id="google-pay" style="display:none;" data-google-pay-id="{{ googlePayMerchantId }}" data-env="{{ testMode ? 'TEST' : 'PRODUCTION' }}" data-type="{{ googlePay.type ?? 'plain' }}" data-color="{{ googlePay.color ?? 'default' }}" data-locale="{{ currentSite.locale|split('-')|first }}"></div>
 	{% endif %}
 	{% if applePay ?? false %}
-	<apple-pay-button data-id="apple-pay" style="display:none;" buttonstyle="{{ apple.style ?? 'black' }}" type="{{ apple.type ?? 'plain' }}" locale="{{ currentSite.locale }}"></apple-pay-button>
+	<apple-pay-button data-id="apple-pay" style="display:none;" buttonstyle="{{ applePay.style ?? 'black' }}" type="{{ applePay.type ?? 'plain' }}" locale="{{ currentSite.locale }}"></apple-pay-button>
 	{% endif %}
 </div>
