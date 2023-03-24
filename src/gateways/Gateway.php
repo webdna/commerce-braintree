@@ -14,8 +14,8 @@ use webdna\commerce\braintree\Braintree as BT;
 
 use webdna\commerce\braintree\assetbundles\dropinui\DropinUiAsset;
 use webdna\commerce\braintree\assetbundles\hostedfields\HostedFieldsAsset;
-use webdna\commerce\braintree\assetbundles\quickcheckout\GooglePayAsset;
-use webdna\commerce\braintree\assetbundles\quickcheckout\ApplePayAsset;
+use webdna\commerce\braintree\assetbundles\expresscheckout\GooglePayAsset;
+use webdna\commerce\braintree\assetbundles\expresscheckout\ApplePayAsset;
 use webdna\commerce\braintree\models\Payment;
 use webdna\commerce\braintree\models\CancelSubscription;
 use webdna\commerce\braintree\models\Plan;
@@ -1064,7 +1064,7 @@ class Gateway extends BaseGateway
 		return TemplateHelper::raw($html);
 	}
 	
-	public function getQuickCheckoutHtml(array $params = []): string
+	public function getExpressCheckoutHtml(array $params = []): string
 	{
 		$request = Craft::$app->getRequest();
 	
@@ -1103,7 +1103,7 @@ class Gateway extends BaseGateway
 			$view->registerAssetBundle(ApplePayAsset::class);
 		}
 		
-		$html = $view->renderTemplate('commerce-braintree/paymentForms/quick-checkout', $params);
+		$html = $view->renderTemplate('commerce-braintree/paymentForms/express-checkout', $params);
 	
 		$view->setTemplateMode($previousMode);
 	

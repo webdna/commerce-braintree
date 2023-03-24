@@ -97,8 +97,10 @@
 						.then(function(response) {
 							if (response.result) {
 								const button = paymentsClient.createButton({
-									buttonColor: 'black',
-									buttonType: 'checkout',
+									buttonSizeMode: 'fill',
+									buttonColor: $googlePay.dataset.color || 'default',
+									buttonType: $googlePay.dataset.type || 'plain',
+									buttonLocale: $googlePay.dataset.locale || 'en',
 									onClick: function(e) {
 									
 										let paymentDataRequest = googlePaymentInstance.createPaymentDataRequest();

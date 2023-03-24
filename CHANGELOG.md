@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.0.0-beta.9 - 2023-03-24
+### Changed
+- quick checkout => express checkout
+
+### Added
+- params for express checkout buttons
+- express checkout buttons wrapping div with class "express-checkout-buttons" for layout purposes.
+
 ## 3.0.0-beta.8 - 2023-03-21
 ### Changed
 - removed testing values

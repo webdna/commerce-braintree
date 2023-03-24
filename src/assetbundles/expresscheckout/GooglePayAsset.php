@@ -1,13 +1,13 @@
 <?php
 
-namespace webdna\commerce\braintree\assetbundles\quickcheckout;
+namespace webdna\commerce\braintree\assetbundles\expresscheckout;
 
 use Craft;
 use craft\web\AssetBundle;
 use craft\web\assets\cp\CpAsset;
 
 
-class ApplePayAsset extends AssetBundle
+class GooglePayAsset extends AssetBundle
 {
 	// Public Methods
 	// =========================================================================
@@ -25,11 +25,11 @@ class ApplePayAsset extends AssetBundle
 		];
 
 		$this->js = [
-			'js/ApplePay.js',
+			'js/GooglePay.js',
 		];
 
 		$this->css = [
-			'css/ApplePay.css',
+			'css/GooglePay.css',
 		];
 
 		parent::init();
