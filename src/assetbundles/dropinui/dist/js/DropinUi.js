@@ -19,6 +19,8 @@
 		}
 	})();
 
+	var eventListener;
+
 	function init($) {
 		document.querySelectorAll('form').forEach(function($form) {
 			var $token = $form.querySelector('[name*="gatewayToken"]'),
@@ -123,18 +125,18 @@
 						//$submit.prop('disabled', false);
 					});
 
-					$form.addEventListener('submit', formSubmit.bind({
-							dropinInstance: dropinInstance,
-							threeDSecure: $dropinUi.dataset.threedsecure,
-							options: {
-								threeDSecure: {
-									amount: amount,
-									email: email,
-									billingAddress: address ? JSON.parse(address) : address
-								}
+					eventListener = formSubmit.bind({
+						dropinInstance: dropinInstance,
+						threeDSecure: $dropinUi.dataset.threedsecure,
+						options: {
+							threeDSecure: {
+								amount: amount,
+								email: email,
+								billingAddress: address ? JSON.parse(address) : address
 							}
-						})
-					);
+						}
+					});
+					$form.addEventListener('submit', eventListener);
 				});
 			}
 		});
@@ -162,7 +164,7 @@
 			if ((payload.liabilityShiftPossible && payload.liabilityShifted) || !payload.liabilityShiftPossible || payload.type !== 'CreditCard' || !threeDSecure) {
 				processing($submit);
 				$form.querySelector('input[name*=nonce]').value = payload.nonce;
-				$form.removeEventListener('submit', formSubmit);
+				$form.removeEventListener('submit', eventListener);
 				$form.submit();
 			} else {
 				if (window.braintreeError) {
