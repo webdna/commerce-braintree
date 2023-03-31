@@ -7,3 +7,9 @@
 <input type="hidden" name="address" value="{{ gateway.format3DSAddress(order)|json_encode }}">
 
 <div data-id="dropInUi" {{ gateway.testMode ? 'data-sandbox' }} data-name="{{ storeName ?? siteName }}" data-locale="{{ craft.app.locale().id|replace('-','_') }}" data-subscription="{{ subscription }}" data-threedsecure="{{ threeDSecure }}" data-manage="{{ manage }}" data-translations="{{ (translations ?? null)|json_encode }}" data-google-pay-id="{{ googlePayMerchantId }}"></div>
+
+{% if callback ?? null %}
+	{% js %}
+		window.commerceBT.callback = {{ callback|raw }}
+	{% endjs %}
+{% endif %}

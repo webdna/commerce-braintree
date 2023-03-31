@@ -18,6 +18,8 @@
 			setTimeout(check, 50);
 		}
 	})();
+	
+	window.commerceBT = {};
 
 	function init($) {
 		document.querySelectorAll('form').forEach(function($form) {
@@ -123,18 +125,18 @@
 						//$submit.prop('disabled', false);
 					});
 
-					$form.addEventListener('submit', formSubmit.bind({
-							dropinInstance: dropinInstance,
-							threeDSecure: $dropinUi.dataset.threedsecure,
-							options: {
-								threeDSecure: {
-									amount: amount,
-									email: email,
-									billingAddress: address ? JSON.parse(address) : address
-								}
+					window.commerceBT.options = {
+						dropinInstance: dropinInstance,
+						threeDSecure: $dropinUi.dataset.threedsecure,
+						options: {
+							threeDSecure: {
+								amount: amount,
+								email: email,
+								billingAddress: address ? JSON.parse(address) : address
 							}
-						})
-					);
+						}
+					}
+					$form.addEventListener('submit', formSubmit);
 				});
 			}
 		});
@@ -143,13 +145,13 @@
 	function formSubmit(e) {
 		e.preventDefault();
 		//console.log(e)
-		var dropinInstance = this.dropinInstance,
+		var dropinInstance = window.commerceBT.options.dropinInstance,
 			$form = e.currentTarget,
-			threeDSecure = this.threeDSecure,
+			threeDSecure = window.commerceBT.options.threeDSecure,
 			$submit = $form.querySelector('button[type="submit"]');
 		processing($submit);
 
-		dropinInstance.requestPaymentMethod(threeDSecure ? this.options : {}, function(err, payload) {
+		dropinInstance.requestPaymentMethod(threeDSecure ? window.commerceBT.options.options : {}, function(err, payload) {
 			if (err) {
 				console.error(err);
 				if (window.braintreeError) {
@@ -163,7 +165,11 @@
 				processing($submit);
 				$form.querySelector('input[name*=nonce]').value = payload.nonce;
 				$form.removeEventListener('submit', formSubmit);
-				$form.submit();
+				if (window.commerceBT.hasOwnProperty('callback')) {
+					window.commerceBT.callback();
+				} else {
+					$form.submit();
+				}
 			} else {
 				if (window.braintreeError) {
 					window.braintreeError('3ds failed');
