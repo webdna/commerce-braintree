@@ -19,7 +19,10 @@
 		}
 	})();
 	
-	window.commerceBT = {};
+	window.commerceBT = {
+		callbacks:{},
+		methodSelected:false,
+	};
 
 	function init($) {
 		document.querySelectorAll('form').forEach(function($form) {
@@ -116,13 +119,21 @@
 					}
 					//need for vault
 					dropinInstance.on('paymentMethodRequestable', function(e) {
-						reset($submit);
+						if (!window.commerceBT.methodSelected) {
+							$form.addEventListener('submit', formSubmit);
+							reset($submit);
+						}
 					});
 					dropinInstance.on('noPaymentMethodRequestable', function(e) {
-						processing($submit);
+						// processing($submit);
 					});
 					dropinInstance.on('paymentOptionSelected', function(e) {
-						//$submit.prop('disabled', false);
+						window.commerceBT.methodSelected = false;
+						$form.removeEventListener('submit', formSubmit);
+						processing($submit);
+						if (window.commerceBT.callbacks.hasOwnProperty('onPaymentMethodSelect')) {
+							window.commerceBT.callbacks.onPaymentMethodSelect();
+						}
 					});
 
 					window.commerceBT.options = {
@@ -136,7 +147,7 @@
 							}
 						}
 					}
-					$form.addEventListener('submit', formSubmit);
+					//$form.addEventListener('submit', formSubmit);
 				});
 			}
 		});
@@ -165,8 +176,9 @@
 				processing($submit);
 				$form.querySelector('input[name*=nonce]').value = payload.nonce;
 				$form.removeEventListener('submit', formSubmit);
-				if (window.commerceBT.hasOwnProperty('callback')) {
-					window.commerceBT.callback();
+				window.commerceBT.methodSelected = true;
+				if (window.commerceBT.callbacks.hasOwnProperty('onPaymentMethodReady')) {
+					window.commerceBT.callbacks.onPaymentMethodReady();
 				} else {
 					$form.submit();
 				}
