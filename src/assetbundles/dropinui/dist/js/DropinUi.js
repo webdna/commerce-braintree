@@ -36,10 +36,16 @@
 				$submit = $form.querySelector('button[type="submit"]');
 
 			if ($dropinUi) {
-				$submit.dataset.text = $submit.innerHTML;
+				if (!$submit.dataset.manual) {
+					$submit.dataset.text = $submit.innerHTML;
+				}
 				if ($submit.dataset.loading) {
 					$submit.disabled = true;
-					$submit.innerHTML = $submit.dataset.loading;
+					if ($submit.dataset.manual) {
+						$submit.dataset.loading = true;
+					} else {
+						$submit.innerHTML = $submit.dataset.loading;
+					}
 				}
 
 				var options = {
@@ -112,7 +118,11 @@
 						return;
 					}
 					
-					$submit.innerHTML = $submit.dataset.text;
+					if ($submit.dataset.manual) {
+						$submit.dataset.loading = false;
+					} else {
+						$submit.innerHTML = $submit.dataset.text;
+					}
 
 					if (dropinInstance.isPaymentMethodRequestable()) {
 						reset($submit);
@@ -125,14 +135,16 @@
 						}
 					});
 					dropinInstance.on('noPaymentMethodRequestable', function(e) {
-						// processing($submit);
+						disable($submit);
 					});
 					dropinInstance.on('paymentOptionSelected', function(e) {
 						window.commerceBT.methodSelected = false;
 						$form.removeEventListener('submit', formSubmit);
-						processing($submit);
+						//processing($submit);
 						if (window.commerceBT.callbacks.hasOwnProperty('onPaymentMethodSelect')) {
 							window.commerceBT.callbacks.onPaymentMethodSelect();
+						} else {
+							processing($submit);
 						}
 					});
 
@@ -192,14 +204,25 @@
 			}
 		});
 	}
+	function disable($button) {
+		$button.disabled = true;
+	}
 	function reset($button) {
 		$button.disabled = false;
-		$button.innerHTML = $button.dataset.text;
+		if ($button.dataset.manual) {
+			$button.dataset.processing = false;
+		} else {
+			$button.innerHTML = $button.dataset.text;
+		}
 	}
 	function processing($button) {
 		$button.disabled = true;
-		if ($button.dataset.processing) {
-			$button.innerHTML = $button.dataset.processing;
+		if ($button.dataset.manual) {
+			$button.dataset.processing = true;
+		} else {
+			if ($button.dataset.processing) {
+				$button.innerHTML = $button.dataset.processing;
+			}
 		}
 	}
 })();
