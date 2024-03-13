@@ -94,7 +94,7 @@ class Gateway extends BaseGateway
 
 	private ?Braintree\Gateway $gateway = null;
 
-	private ?User $customer = null;
+	private ?Braintree\Customer $customer = null;
 	
 	private string $_dropinUiSDKVersion = '1.34.0';
 	
@@ -308,7 +308,7 @@ class Gateway extends BaseGateway
 		//Craft::dd($request);
 	}*/
 
-	public function getCustomer($user): ?User
+	public function getCustomer($user): ?Braintree\Customer
 	{
 		if (!$this->customer) {
 			try {
@@ -1158,7 +1158,7 @@ class Gateway extends BaseGateway
 		$subscription = Subscription::find()->reference($data->id)->one();
 
 		if (!$subscription) {
-			Craft::warning('Subscription with the reference “' .$subscription->id .'” not found when processing Braintree webhook');
+			Craft::warning('Subscription with the reference “' . $data->id . '” not found when processing Braintree webhook');
 
 			return;
 		}
@@ -1184,7 +1184,7 @@ class Gateway extends BaseGateway
 
 		$defaultPaymentCurrency = Commerce::getInstance()->getPaymentCurrencies()->getPrimaryPaymentCurrency();
 		$currency = Commerce::getInstance()->getCurrencies()->getCurrencyByIso($defaultPaymentCurrency->iso);
-		$payment = $this->_createSubscriptionPayment($data, $currency->alphabeticCode);
+		$payment = $this->_createSubscriptionPayment($data, $currency);
 
 		Commerce::getInstance()->getSubscriptions()->receivePayment($subscription, $payment, $data->nextBillingDate);
 	}
