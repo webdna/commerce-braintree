@@ -1136,7 +1136,7 @@ class Gateway extends BaseGateway
 	{
 		$payment = new SubscriptionPayment([
 			'paymentAmount' => $data->transactions[0]->amount,
-			'paymentCurrency' => $currency->alphabeticCode,
+			'paymentCurrency' => $currency,
 			'paymentDate' => $data->transactions[0]->createdAt,
 			'paymentReference' => $data->id,
 			'paid' => true,
