@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## 3.0.1 - 2034-02-06
+## 3.0.2 - 2024-03-13
+### Fixed
+- Braintree\Customer type
+
+## 3.0.1 - 2024-02-06
 ### Changed
 - manual state control option for buttons
 - Released - finally!
