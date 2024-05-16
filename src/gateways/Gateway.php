@@ -96,9 +96,9 @@ class Gateway extends BaseGateway
 
 	private ?Braintree\Customer $customer = null;
 	
-	private string $_dropinUiSDKVersion = '1.34.0';
+	private string $_dropinUiSDKVersion = '1.42.0';
 	
-	private string $_clientSDKVersion = '3.91.0';
+	private string $_clientSDKVersion = '3.102.0';
 
 	// Public Methods
 	// =========================================================================

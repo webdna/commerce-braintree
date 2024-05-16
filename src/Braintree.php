@@ -105,7 +105,6 @@ class Braintree extends Plugin
 		Craft::getLogger()->dispatcher->targets[] = new MonologTarget([
 			'name' => 'braintree',
 			'categories' => ['braintree'],
-			'level' => Logger::LEVEL_INFO,
 			'logContext' => false,
 			'allowLineBreaks' => true,
 			'formatter' => new LineFormatter(
