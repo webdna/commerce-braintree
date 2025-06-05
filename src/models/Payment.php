@@ -27,25 +27,26 @@ class Payment extends BasePaymentForm
     /**
      * @var string credit card reference
      */
-	public $nonce;
-	public $token;
-	public $type;
-	public $firstName;
-	public $lastName;
-	public $number;
-	public $expiry;
-	public $cvv;
-	public $paymentMethod;
-	public $default;
+    public $nonce;
+    public $deviceData;
+    public $token;
+    public $type;
+    public $firstName;
+    public $lastName;
+    public $number;
+    public $expiry;
+    public $cvv;
+    public $paymentMethod;
+    public $default;
 
-	//public $amount;
+    //public $amount;
 
     /**
      * @inheritdoc
      */
     public function populateFromPaymentSource(PaymentSource $paymentSource): void
     {
-		$this->token = $paymentSource->token;
+        $this->token = $paymentSource->token;
     }
 
     /**

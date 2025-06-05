@@ -13,7 +13,7 @@
  */
 #}
 
-{% from "_includes/forms" import autosuggestField, lightswitchField, booleanMenuField %}
+{% from "_includes/forms" import autosuggestField, lightswitchField, booleanMenuField, editableTableField %}
 
 {{ autosuggestField({
     label: 'Merchant ID'|t('commerce'),
@@ -22,8 +22,8 @@
     name: 'merchantId',
     value: gateway.getMerchantId(false),
     errors: gateway.getErrors('merchantId'),
-	suggestEnvVars: true,
-	required: true,
+    suggestEnvVars: true,
+    required: true,
 }) }}
 
 {{ autosuggestField({
@@ -33,8 +33,8 @@
     name: 'publicKey',
     value: gateway.getPublicKey(false),
     errors: gateway.getErrors('publicKey'),
-	suggestEnvVars: true,
-	required: true,
+    suggestEnvVars: true,
+    required: true,
 }) }}
 
 {{ autosuggestField({
@@ -44,8 +44,8 @@
     name: 'privateKey',
     value: gateway.getPrivateKey(false),
     errors: gateway.getErrors('privateKey'),
-	suggestEnvVars: true,
-	required: true,
+    suggestEnvVars: true,
+    required: true,
 }) }}
 
 {{ autosuggestField({
@@ -56,7 +56,7 @@
     name: 'googlePayMerchantId',
     value: gateway.getGooglePayMerchantId(false),
     errors: gateway.getErrors('googlePayMerchantId'),
-	suggestEnvVars: true,
+    suggestEnvVars: true,
 }) }}
 
 
@@ -76,10 +76,48 @@
     label: currency.iso~' Merchant Account ID'|t('commerce'),
     class: 'ltr',
     name: 'merchantAccountIds['~currency.iso~']',
-    value: gateway.getMerchantAccountId(currency.iso, false),
-	suggestEnvVars: true,
-	required: true,
+    value: gateway.getMerchantAccountId(currency.iso, null, false),
+    suggestEnvVars: true,
+    required: true,
 }) }}
+
+{% if craft.app.isMultiSite %}
+    <a class="fieldtoggle" data-target="{{ currency.iso }}-site-overrides">{{ "Site Overrides"|t('app') }}</a>
+    <div id="{{ currency.iso }}-site-overrides" class="hidden">
+    {{ editableTableField({
+        label: currency.iso~' Site Overrides'|t('app'),
+        instructions: 'Blank values will default to the settings above.'|t('app'),
+        id: 'site-overrides',
+        name: 'siteOverrides['~currency.iso~']',
+        cols: {
+            heading: {
+                type: 'heading',
+                heading: 'Site'|t('app'),
+                suggestEnvVars: true,
+                thin: true,
+            },
+            merchantAccountId: {
+                type: 'autosuggest',
+                heading: 'Merchant Account ID'|t('app'),
+                suggestEnvVars: true,
+            }
+        }|filter,
+        rows: collect(craft.app.sites.getAllSites())
+            .keyBy(site => site.uid)
+            .map(site => {
+                heading: site.getUiLabel(),
+                ...(gateway.getSiteOverrides(currency.iso, site.uid, false) ?? {})
+            })
+            .all(),
+        fullWidth: true,
+        allowAdd: false,
+        allowDelete: false,
+        allowReorder: false,
+        errors: [],
+        static: readOnly,
+    }) }}
+    </div>
+{% endif %}
 {% endfor %}
 {# {% endif %} #}
 

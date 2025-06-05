@@ -51,6 +51,7 @@
 				var options = {
 					authorization: $token.value,
 					container: $dropinUi,
+					dataCollector: true,
 					locale: $dropinUi.dataset.locale,
 					vaultManager: $dropinUi.dataset.manage,
 					card: {
@@ -187,6 +188,7 @@
 			if ((payload.liabilityShiftPossible && payload.liabilityShifted) || !payload.liabilityShiftPossible || payload.type !== 'CreditCard' || !threeDSecure) {
 				processing($submit);
 				$form.querySelector('input[name*=nonce]').value = payload.nonce;
+				$form.querySelector('input[name*=deviceData]').value = payload.deviceData;
 				$form.removeEventListener('submit', formSubmit);
 				window.commerceBT.methodSelected = true;
 				if (window.commerceBT.callbacks.hasOwnProperty('onPaymentMethodReady')) {

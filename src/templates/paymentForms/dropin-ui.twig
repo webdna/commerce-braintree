@@ -1,6 +1,7 @@
 
-<input type="hidden" name="gatewayToken" value="{{ gateway.getToken(vault ? currentUser : null, order.paymentCurrency) }}" />
+<input type="hidden" name="gatewayToken" value="{{ gateway.getToken(vault ? currentUser : null, order.paymentCurrency, currentSite) }}" />
 <input type="hidden" name="nonce" value="" />
+<input type="hidden" name="deviceData" value="" />
 <input type="hidden" name="amount" value="{{ order.outstandingBalance }}" />
 <input type="hidden" name="currency" value="{{ order.paymentCurrency }}">
 <input type="hidden" name="email" value="{{ order.email }}">

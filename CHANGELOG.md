@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.1.0 - 2025-05-05
+### Added
+- multisite override support for merchant account ids
+- device data collection for dropin-ui
+
+### Updated
+- DropInUiSDK version 1.44.1
+- ClientSDK version 3.111.0
+
 ## 3.0.3 - 2024-05-16
 ### Added
 - Craft 5 compatibility

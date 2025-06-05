@@ -87,6 +87,8 @@ class Gateway extends BaseGateway
 	private bool|string $_testMode = false;
 
 	private array $_merchantAccountIds = [];
+	
+	private array $_siteOverrides = [];
 
 	private bool $_sendCartInfo = false;
 
@@ -96,9 +98,9 @@ class Gateway extends BaseGateway
 
 	private ?Braintree\Customer $customer = null;
 	
-	private string $_dropinUiSDKVersion = '1.42.0';
+	private string $_dropinUiSDKVersion = '1.44.1';
 	
-	private string $_clientSDKVersion = '3.102.0';
+	private string $_clientSDKVersion = '3.111.0';
 
 	// Public Methods
 	// =========================================================================
@@ -134,6 +136,7 @@ class Gateway extends BaseGateway
 		$settings['privateKey'] = $this->getPrivateKey(false);
 		$settings['testMode'] = $this->getTestMode(false);
 		$settings['merchantAccountIds'] = $this->_merchantAccountIds;
+		$settings['siteOverrides'] = $this->_siteOverrides;
 		$settings['googlePayMerchantId'] = $this->getGooglePayMerchantId(false);
 		$settings['dropinUiSDKVersion'] = $this->getDropinUiSDKVersion(false);
 		$settings['clientSDKVersion'] = $this->getClientSDKVersion(false);
@@ -188,8 +191,15 @@ class Gateway extends BaseGateway
 	}
 	
 	
-	public function getMerchantAccountId(string $currency, bool $parse = true): ?string
+	public function getMerchantAccountId(string $currency, $site=null, bool $parse = true): ?string
 	{
+		if ($site) {
+			$override = $this->getSiteOverrides($currency, $site->uid)['merchantAccountId'];
+			if ($override != '') {
+				return $parse ? App::parseEnv($override) : $override;
+			}
+		}
+		
 		if (empty($this->_merchantAccountIds[$currency])) {
 			return null;
 		}
@@ -204,6 +214,19 @@ class Gateway extends BaseGateway
 	public function setMerchantAccountIds(array $merchantAccountIds): void
 	{
 		$this->_merchantAccountIds = $merchantAccountIds;
+	}
+	
+	public function getSiteOverrides(string $currency, string $site, bool $parse = true): ?array
+	{
+		if (empty($this->_siteOverrides[$currency][$site])) {
+			return null;
+		}
+		return $parse ? collect($this->_siteOverrides[$currency][$site])->map(function($o){ return App::parseEnv($o); })->toArray() : $this->_siteOverrides[$currency][$site];
+	}
+	
+	public function setSiteOverrides(array $siteOverrides): void
+	{
+		$this->_siteOverrides = $siteOverrides;
 	}
 	
 	
@@ -256,13 +279,13 @@ class Gateway extends BaseGateway
 		}
 	}
 
-	public function getToken($user = null, $currency = null): string
+	public function getToken($user = null, $currency = null, $site=null): string
 	{
 		//$omnipayGateway = $this->createGateway();
 		$params = [];
 		
 		if ($currency) {
-			$params['merchantAccountId'] = $this->getMerchantAccountId($currency);
+			$params['merchantAccountId'] = $this->getMerchantAccountId($currency, $site);
 		}
 		if ($user) {
 			try {
@@ -385,7 +408,10 @@ class Gateway extends BaseGateway
 			} elseif ($form->token) {
 				$data['paymentMethodToken'] = $form->token;
 			}
-			if ($merchantAccountId = $this->getMerchantAccountId($transaction->currency)) {
+			if ($form->deviceData) {
+				$data['deviceData'] = $form->deviceData;
+			}
+			if ($merchantAccountId = $this->getMerchantAccountId($transaction->currency, $order->orderSite)) {
 				$data['merchantAccountId'] = $merchantAccountId;
 			} else {
 				$data['merchantAccountId'] = "";
@@ -517,7 +543,10 @@ class Gateway extends BaseGateway
 			} elseif ($form->token) {
 				$data['paymentMethodToken'] = $form->token;
 			}
-			if ($merchantAccountId = $this->getMerchantAccountId($transaction->currency)) {
+			if ($form->deviceData) {
+				$data['deviceData'] = $form->deviceData;
+			}
+			if ($merchantAccountId = $this->getMerchantAccountId($transaction->currency, $order->orderSite)) {
 				$data['merchantAccountId'] = $merchantAccountId;
 			} else {
 				$data['merchantAccountId'] = "";
