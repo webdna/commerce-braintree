@@ -194,7 +194,7 @@ class Gateway extends BaseGateway
 	public function getMerchantAccountId(string $currency, $site=null, bool $parse = true): ?string
 	{
 		if ($site) {
-			$override = $this->getSiteOverrides($currency, $site->uid)['merchantAccountId'];
+			$override = $this->getSiteOverrides($currency, $site->uid)['merchantAccountId'] ?? '';
 			if ($override != '') {
 				return $parse ? App::parseEnv($override) : $override;
 			}
@@ -219,7 +219,7 @@ class Gateway extends BaseGateway
 	public function getSiteOverrides(string $currency, string $site, bool $parse = true): ?array
 	{
 		if (empty($this->_siteOverrides[$currency][$site])) {
-			return null;
+			return [];
 		}
 		return $parse ? collect($this->_siteOverrides[$currency][$site])->map(function($o){ return App::parseEnv($o); })->toArray() : $this->_siteOverrides[$currency][$site];
 	}
