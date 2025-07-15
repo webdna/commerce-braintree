@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.1.1 - 2025-07-15
+### Fixed
+- missing gateway setting variable
+
 ## 3.1.0 - 2025-05-05
 ### Added
 - multisite override support for merchant account ids
