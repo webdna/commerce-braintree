@@ -10,16 +10,13 @@
 
 namespace webdna\commerce\braintree;
 
-use webdna\commerce\braintree\models\Settings;
 use webdna\commerce\braintree\assetbundles\dropinui\DropinUiAsset;
 use webdna\commerce\braintree\gateways\Gateway;
-use webdna\commerce\braintree\services\BraintreeService;
 
 use Braintree as BT;
 
 use Craft;
 use craft\base\Plugin;
-use craft\base\Model;
 use craft\services\Plugins;
 use craft\events\PluginEvent;
 use craft\commerce\services\Gateways;
@@ -80,10 +77,6 @@ class Braintree extends Plugin
 	{
 		parent::init();
 		self::$plugin = $this;
-			
-		$this->setComponents([
-			'braintreeService' => BraintreeService::class,
-		]);
 
 		Event::on(
 			Gateways::class,
@@ -130,29 +123,5 @@ class Braintree extends Plugin
 	public static function error($message)
 	{
 		Craft::getLogger()->log($message, Logger::LEVEL_ERROR, 'braintree');
-	}
-
-	// Protected Methods
-	// =========================================================================
-
-	/**
-	 * @inheritdoc
-	 */
-	protected function createSettingsModel(): ?Model
-	{
-		return new Settings();
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	protected function settingsHtml(): string
-	{
-		return Craft::$app->view->renderTemplate(
-			'commerce-braintree/settings',
-			[
-				'settings' => $this->getSettings(),
-			]
-		);
 	}
 }

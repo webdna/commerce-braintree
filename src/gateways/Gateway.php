@@ -37,7 +37,7 @@ use craft\commerce\errors\PaymentException;
 use craft\commerce\errors\TransactionException;
 use craft\commerce\errors\SubscriptionException;
 use craft\commerce\errors\PaymentSourceException;
-use craft\commerce\models\Currency;
+use Money\Currency;
 use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\models\PaymentSource;
 use craft\commerce\models\Transaction;
@@ -194,7 +194,7 @@ class Gateway extends BaseGateway
 	public function getMerchantAccountId(string $currency, $site=null, bool $parse = true): ?string
 	{
 		if ($site) {
-			$override = $this->getSiteOverrides($currency, $site->uid)['merchantAccountId'];
+			$override = $this->getSiteOverrides($currency, $site->uid)['merchantAccountId'] ?? '';
 			if ($override != '') {
 				return $parse ? App::parseEnv($override) : $override;
 			}
@@ -290,7 +290,7 @@ class Gateway extends BaseGateway
 		if ($user) {
 			try {
 				$customer = $this->getCustomer($user);
-			} catch (\Braintree_Exception_NotFound $e) {
+			} catch (\Braintree\Exception\NotFound $e) {
 				$customer = null;
 			}
 
@@ -470,7 +470,7 @@ class Gateway extends BaseGateway
 			}
 
 			//check for existing paymentSource
-			$sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
+			$sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByCustomerId($this->id, $userId);
 
 			foreach ($sources as $source) {
 				if ($source->token == $response->paymentMethod->token) {
@@ -633,7 +633,7 @@ class Gateway extends BaseGateway
 				if ($error->code == "81905") {
 					try {
 						$response = $this->gateway->subscription()->find($subscription->reference);
-					} catch (Braintree_Exception_NotFound $e) {
+					} catch (\Braintree\Exception\NotFound $e) {
 						throw new SubscriptionException('Failed to cancel subscription: ' .$subscription->reference .". Error:" .$e->getMessage());
 					}
 
@@ -669,7 +669,7 @@ class Gateway extends BaseGateway
 	{
 		$data = $subscription['subscriptionData'];
 		$currency = Commerce::getInstance()->getCurrencies()->getCurrencyByIso($subscription->plan->currency);
-		return Craft::$app->getFormatter()->asCurrency($data['nextBillingPeriodAmount'], $currency->alphabeticCode);
+		return Craft::$app->getFormatter()->asCurrency($data['nextBillingPeriodAmount'], $currency->getCode());
 		//return $data->nextBillingPeriodAmount;
 	}
 
@@ -736,7 +736,7 @@ class Gateway extends BaseGateway
 
 		try {
 			$response = $this->gateway->subscription()->find($subscription->reference);
-		} catch (\Braintree_Exception_NotFound $e) {
+		} catch (\Braintree\Exception\NotFound $e) {
 			throw new SubscriptionException('Failed to refresh payment history for subscription: ' .$subscription->reference);
 		}
 
@@ -1003,7 +1003,7 @@ class Gateway extends BaseGateway
 
 	private function getPaymentSource($userId, $token = null): mixed
 	{
-		$sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByUserId($this->id, $userId);
+		$sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByCustomerId($this->id, $userId);
 
 		if (\count($sources) === 0) {
 			return null;

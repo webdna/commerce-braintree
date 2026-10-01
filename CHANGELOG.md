@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+### Fixed
+- Fixed subscription renewal webhooks failing with a TypeError on Commerce 5 (`craft\commerce\models\Currency` no longer exists).
+- Fixed saving and finding payment sources on Commerce 5 (`getAllGatewayPaymentSourcesByUserId()` is now `getAllGatewayPaymentSourcesByCustomerId()`).
+- Fixed `NotFound` errors from the Braintree SDK not being caught when cancelling or refreshing a subscription.
+- Fixed the next payment amount using a currency property that no longer exists.
+- Fixed a PHP warning when a site has no merchant account override.
+- Removed a settings model and service that did not exist, which made `getSettings()` fatal.
+
 ## 3.1.1 - 2025-07-15
 ### Fixed
 - missing gateway setting variable
