@@ -2,7 +2,7 @@
 spec: Braintree for Craft Commerce 3.2.0 — payment sources
 slug: braintree-3-2-payment-sources
 status: draft
-version: 0.1
+version: 0.3
 date: 2026-10-20
 author: Claude (with Sam Birch)
 client: webdna (Craft Plugin Store product)
@@ -12,7 +12,7 @@ related: [webdna/commerce-braintree#53]
 
 # Braintree for Craft Commerce 3.2.0 — payment sources
 
-> **Status:** draft - **Version:** 0.1
+> **Status:** draft - **Version:** 0.3
 > A customer can save a card or PayPal account as a Commerce payment source, subscribe to a plan
 > with it, and pay an order with it. Until now no subscription could be started: `subscribe()`
 > needs a saved payment source and the gateway told Commerce it could not hold one.
@@ -167,8 +167,18 @@ Commerce 5's in every line this spec relies on (checked 20 Oct 2026).
       a second user, a plan on another gateway, no plan, no subscription → 403 with no Braintree call;
       GET → 405, guest → refused. The old controllers fail the cross-user cases (a second user's POST
       deleted the owner's method). TN-2/TN-3 against the sandbox stay in B4.
-- [ ] **1.2 Gateway payment sources** — `src/gateways/Gateway.php`
+- [x] **1.2 Gateway payment sources** — `src/gateways/Gateway.php`, `src/models/Payment.php`
       Rules: BR-1 to BR-6, BR-10, BR-11 · Verify: TS-1, TS-2, TS-5, TS-6, TS-7, TS-8, TN-1, TN-4
+      Built 20 Oct 2026, proved without sandbox keys as 1.1 was: the gateway and Commerce's own
+      `PaymentSources` service driven in a bootstrapped craft5 app, the SDK swapped for a recording
+      fake, fixtures rolled back. 32 cases pass (the committed code fails at the first two). Found on
+      the way: `subscribe()` wrapped Commerce's plan in `new Plan($plan)`, which throws a TypeError
+      on Craft 4 and 5, so no subscription could ever start; it now uses the plan as given. The
+      response is stored as JSON (`type`, `cardType`, `last4`, `email`, `expirationDate`) because
+      `PaymentSource::$response` is a string, and `Payment::populateFromPaymentSource()` reads the
+      type back so a saved PayPal account is charged without the order's addresses, as a posted
+      PayPal nonce is. A token Commerce already holds is replaced by deleting the old row only, never
+      the method in Braintree. TS-* against the sandbox stay in B4.
 - [ ] **1.3 Drop-in payment-source mode** — `src/templates/paymentForms/dropin-ui.twig`, `src/assetbundles/dropinui/dist/js/DropinUi.js`, `Gateway::getSitePaymentFormHtml()`
       Rules: BR-7 · Verify: TS-3, TS-4
 - [ ] **1.4 Release** — `README.md`, `CHANGELOG.md` (3.2.0); reply on #53 and close it when tagged
@@ -230,5 +240,6 @@ ddev craft plugin/enable commerce-braintree
 
 | Date | Version | Change | By |
 |---|---|---|---|
+| 2026-10-20 | 0.3 | 1.2 built: gateway payment sources; subscribe()'s plan TypeError fixed | Claude |
 | 2026-10-20 | 0.2 | 1.1 built: ownership checks on both controllers | Claude |
 | 2026-10-20 | 0.1 | First draft, from #53 and the 3.1.2 triage finding that subscriptions cannot start | Claude |

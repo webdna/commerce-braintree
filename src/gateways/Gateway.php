@@ -288,20 +288,7 @@ class Gateway extends BaseGateway
 			$params['merchantAccountId'] = $this->getMerchantAccountId($currency, $site);
 		}
 		if ($user) {
-			try {
-				$customer = $this->getCustomer($user);
-			} catch (\Braintree\Exception\NotFound $e) {
-				$customer = null;
-			}
-
-			if (!$customer) {
-				$customer = $this->gateway->customer()->create([
-					'id' => $user->uid,
-					'firstName' => $user->firstName,
-					'lastName' => $user->lastName,
-					'email' => $user->email,
-				]);
-			}
+			$this->ensureCustomer($user);
 			$params['customerId'] = $user->uid;
 		}
 		$token = $this->gateway->clientToken($params)->generate($params);
@@ -333,7 +320,7 @@ class Gateway extends BaseGateway
 
 	public function getCustomer($user): ?Braintree\Customer
 	{
-		if (!$this->customer) {
+		if (!$this->customer || $this->customer->id !== $user->uid) {
 			try {
 				$this->customer = $this->gateway->customer()->find($user->uid);
 			} catch (\Throwable $exception) {
@@ -341,6 +328,29 @@ class Gateway extends BaseGateway
 			}
 		}
 		return $this->customer;
+	}
+
+	/**
+	 * Creates the user's Braintree customer (id = the user's uid) if Braintree has none.
+	 */
+	public function ensureCustomer(User $user): void
+	{
+		if ($this->getCustomer($user)) {
+			return;
+		}
+
+		$result = $this->gateway->customer()->create([
+			'id' => $user->uid,
+			'firstName' => $user->firstName,
+			'lastName' => $user->lastName,
+			'email' => $user->email,
+		]);
+
+		if (!$result->success) {
+			throw new Exception($result->message);
+		}
+
+		$this->customer = $result->customer;
 	}
 
 	public function getPaymentMethod($token): mixed
@@ -355,8 +365,11 @@ class Gateway extends BaseGateway
 		} else {
 			$user = Craft::$app->getUsers()->getUserById($userId);
 		}
-		//Craft::dd($sourceData->nonce);
-		//BT::log('Create payment method: ' . $order->id);
+		if (!$user) {
+			throw new PaymentSourceException(Craft::t('commerce-braintree', 'No user to save the payment method for.'));
+		}
+
+		$this->ensureCustomer($user);
 
 		return (object) $this->gateway->paymentMethod()->create([
 			'customerId' => $user->uid,
@@ -461,47 +474,80 @@ class Gateway extends BaseGateway
 
 	public function createPaymentSource(BasePaymentForm $sourceData,int $userId): PaymentSource
 	{
-		//Craft::dd($sourceData);
 		try {
 			$response = $this->createPaymentMethod($sourceData, $userId);
-			//Craft::dd($response);
-			if (!$response->success) {
-				throw new PaymentSourceException($response->message);
-			}
-
-			//check for existing paymentSource
-			$sources = Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByCustomerId($this->id, $userId);
-
-			foreach ($sources as $source) {
-				if ($source->token == $response->paymentMethod->token) {
-					Commerce::getInstance()->getPaymentSources()->deletePaymentSourceById($source->id);
-				}
-			}
-
-			$description = Craft::t('commerce-braintree','{cardType} ending in ••••{last4}',
-				[
-					'cardType' => $response->paymentMethod->cardType,
-					'last4' => $response->paymentMethod->last4,
-				]
-			);
-
-			$paymentSource = new PaymentSource([
-				'userId' => $userId,
-				'gatewayId' => $this->id,
-				'token' => $response->paymentMethod->token,
-				'response' => $response->paymentMethod,
-				'description' => $description,
-			]);
-
-			return $paymentSource;
+		} catch (PaymentSourceException $exception) {
+			throw $exception;
 		} catch (\Throwable $exception) {
+			BT::error($exception->getMessage());
 			throw new PaymentSourceException($exception->getMessage());
 		}
+
+		if (!$response->success) {
+			BT::error('Create payment source: ' . $response->message);
+			throw new PaymentSourceException($response->message);
+		}
+
+		$method = $response->paymentMethod;
+		$type = (new \ReflectionClass($method))->getShortName();
+
+		// Braintree can hand back a token Commerce already holds (the same PayPal account vaulted
+		// twice); drop the old row without asking Braintree to delete the method just returned
+		foreach (Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByCustomerId($this->id, $userId) as $source) {
+			if ($source->token == $method->token) {
+				\craft\commerce\records\PaymentSource::deleteAll(['id' => $source->id]);
+			}
+		}
+
+		return new PaymentSource([
+			'customerId' => $userId,
+			'gatewayId' => $this->id,
+			'token' => $method->token,
+			'response' => Json::encode([
+				'type' => $type,
+				'cardType' => $method->cardType ?? null,
+				'last4' => $method->last4 ?? null,
+				'email' => $method->email ?? null,
+				'expirationDate' => $method->expirationDate ?? null,
+			]),
+			'description' => $this->paymentSourceDescription($method),
+		]);
 	}
 
 	public function deletePaymentSource($token): bool
 	{
+		try {
+			$result = $this->gateway->paymentMethod()->delete($token);
+		} catch (\Braintree\Exception\NotFound $exception) {
+			// already gone from Braintree, which is what was asked for
+			return true;
+		} catch (\Throwable $exception) {
+			BT::error('Delete payment source ' . $token . ': ' . $exception->getMessage());
+			return false;
+		}
+
+		if (!$result->success) {
+			BT::error('Delete payment source ' . $token . ': ' . ($result->message ?? ''));
+			return false;
+		}
+
 		return true;
+	}
+
+	private function paymentSourceDescription($method): string
+	{
+		if (!empty($method->cardType) && !empty($method->last4)) {
+			return Craft::t('commerce-braintree', '{cardType} ending in ••••{last4}', [
+				'cardType' => $method->cardType,
+				'last4' => $method->last4,
+			]);
+		}
+
+		if ($method instanceof Braintree\PayPalAccount) {
+			return Craft::t('commerce-braintree', 'PayPal ({email})', ['email' => $method->email]);
+		}
+
+		return Craft::t('commerce-braintree', 'Saved payment method');
 	}
 
 	public function getPaymentFormModel(): BasePaymentForm
@@ -787,11 +833,14 @@ class Gateway extends BaseGateway
 
 	public function subscribe(User $user, BasePlan $plan, SubscriptionForm $parameters): SubscriptionResponseInterface
 	{
-		$source = $this->getPaymentSource($user->id);
+		$source = $this->getSubscriptionPaymentSource($user);
 		if (!$source) {
 			throw new PaymentSourceException(Craft::t('commerce-braintree','No payment sources are saved to use for subscriptions.'));
 		}
-		$plan = new Plan($plan);
+		// Commerce hands over this gateway's own Plan model (getPlanModel()); wrapping it again throws on Craft 4 and 5
+		if (!$plan instanceof Plan) {
+			$plan = new Plan($plan->toArray());
+		}
 
 		$data = [
 			'paymentMethodToken' => $source->token,
@@ -809,9 +858,9 @@ class Gateway extends BaseGateway
 		$response = $this->createSubscription($data);
 
 		if (!$response->success) {
-			//Craft::dd($response);
+			BT::error('Subscribe: ' . $response->message);
 			throw new SubscriptionException(
-				Craft::t('commerce-braintree', 'Unable to subscribe at this time.')
+				Craft::t('commerce-braintree', 'Unable to subscribe at this time.') . ' ' . $response->message
 			);
 		}
 
@@ -968,7 +1017,7 @@ class Gateway extends BaseGateway
 
 	public function supportsPaymentSources(): bool
 	{
-		return false;
+		return true;
 	}
 
 	public function supportsPurchase(): bool
@@ -1019,6 +1068,26 @@ class Gateway extends BaseGateway
 
 		// get first payment source
 		return $sources[0];
+	}
+
+	/**
+	 * The user's primary payment source when it is on this gateway, otherwise their newest one here.
+	 */
+	private function getSubscriptionPaymentSource(User $user): ?PaymentSource
+	{
+		$primaryId = \craft\commerce\records\Customer::findOne(['customerId' => $user->id])?->primaryPaymentSourceId;
+		$newest = null;
+
+		foreach (Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByCustomerId($this->id, $user->id) as $source) {
+			if ($primaryId && $source->id == $primaryId) {
+				return $source;
+			}
+			if (!$newest || $source->id > $newest->id) {
+				$newest = $source;
+			}
+		}
+
+		return $newest;
 	}
 
 	private function getCpPaymentFormHtml(array $params = []): string

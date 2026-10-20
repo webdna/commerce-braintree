@@ -16,6 +16,7 @@ use craft\commerce\models\PaymentSource;
 
 use Craft;
 use craft\base\Model;
+use craft\helpers\Json;
 
 /**
  * @author    Kurious Agency
@@ -47,6 +48,10 @@ class Payment extends BasePaymentForm
     public function populateFromPaymentSource(PaymentSource $paymentSource): void
     {
         $this->token = $paymentSource->token;
+
+        // a saved PayPal account is charged without the order's addresses, as one posted by nonce is
+        $response = Json::decodeIfJson($paymentSource->response);
+        $this->type = is_array($response) ? ($response['type'] ?? null) : null;
     }
 
     /**
