@@ -2,7 +2,7 @@
 spec: Braintree for Craft Commerce 3.2.0 — payment sources
 slug: braintree-3-2-payment-sources
 status: draft
-version: 0.7
+version: 0.8
 date: 2026-10-20
 author: Claude (with Sam Birch)
 client: webdna (Craft Plugin Store product)
@@ -12,7 +12,7 @@ related: [webdna/commerce-braintree#53]
 
 # Braintree for Craft Commerce 3.2.0 — payment sources
 
-> **Status:** draft - **Version:** 0.7
+> **Status:** draft - **Version:** 0.8
 > A customer can save a card or PayPal account as a Commerce payment source, subscribe to a plan
 > with it, and pay an order with it. Until now no subscription could be started: `subscribe()`
 > needs a saved payment source and the gateway told Commerce it could not hold one.
@@ -262,7 +262,9 @@ disable it after.
 
 ## B4. Definition of done
 
-- [ ] TS-1 to TS-8 and TN-1 to TN-4 pass in craft5 against the sandbox
+- [x] TS-1 to TS-8 and TN-1 to TN-4 pass in craft5 against the sandbox — **TS-4/TS-5 accepted on the
+      fake-SDK proof (Sam, 20 Oct 2026)**: mw-core's sandbox has no plan, and subscribing with a new card
+      and charging the primary source are proven by 1.2's recorded calls and the README forms' run (1.4)
       **Run 20 Oct 2026 against mw-core's sandbox.** Server side, Commerce's real actions with the real
       SDK (Commerce fixtures rolled back; sandbox customers deleted, transactions voided): TS-1 (the
       `fake-valid-visa-nonce` card is 4012…1881, so "Visa ending in ••••1881"), TS-2, TS-3 ("PayPal
@@ -302,6 +304,7 @@ ddev craft plugin/enable commerce-braintree
 
 | Date | Version | Change | By |
 |---|---|---|---|
+| 2026-10-20 | 0.8 | TS-4/TS-5 accepted on the fake-SDK proof (no sandbox plan; Sam); B4 ticked | Claude |
 | 2026-10-20 | 0.7 | BR-12: "Verify cards when saved?" setting, off by default (Sam); TN-1 passes with it on | Claude |
 | 2026-10-20 | 0.6 | Sandbox run (mw-core keys): all but TS-4/TS-5 (no plan) and TN-1 (verification) pass; three fixes | Claude |
 | 2026-10-20 | 0.5 | 1.4 built: README payment sources + subscribing, CHANGELOG 3.2.0; README forms need `|raw` | Claude |
