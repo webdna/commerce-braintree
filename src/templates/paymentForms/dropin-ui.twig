@@ -7,7 +7,7 @@
 <input type="hidden" name="email" value="{{ order.email }}">
 <input type="hidden" name="address" value="{{ gateway.format3DSAddress(order)|json_encode }}">
 
-<div data-id="dropInUi" {{ gateway.testMode ? 'data-sandbox' }} data-name="{{ storeName ?? siteName }}" data-locale="{{ craft.app.locale().id|replace('-','_') }}" data-subscription="{{ subscription }}" data-threedsecure="{{ threeDSecure }}" data-manage="{{ manage }}" data-translations="{{ (translations ?? null)|json_encode }}" data-google-pay-id="{{ googlePayMerchantId }}"{% if dropinOptions ?? false %} data-dropin-options="{{ dropinOptions|json_encode }}"{% endif %}></div>
+<div data-id="dropInUi" {{ gateway.testMode ? 'data-sandbox' }} data-name="{{ storeName ?? siteName }}" data-locale="{{ craft.app.locale().id|replace('-','_') }}" data-subscription="{{ subscription }}"{% if paymentSource ?? false %} data-payment-source{% endif %} data-threedsecure="{{ threeDSecure }}" data-manage="{{ manage }}" data-translations="{{ (translations ?? null)|json_encode }}" data-google-pay-id="{{ googlePayMerchantId }}"{% if dropinOptions ?? false %} data-dropin-options="{{ dropinOptions|json_encode }}"{% endif %}></div>
 
 {% if callbacks ?? [] %}
 	{% js %}

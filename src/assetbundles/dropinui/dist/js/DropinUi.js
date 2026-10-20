@@ -68,7 +68,20 @@
 					options.translations = JSON.parse($dropinUi.dataset.translations);
 				}
 
-				if (Boolean($dropinUi.dataset.subscription) != true) {
+				// payment-source mode: card and PayPal are vaulted; Apple Pay and Google Pay need an amount and are not vaulted
+				if ($dropinUi.dataset.paymentSource !== undefined || Boolean($dropinUi.dataset.subscription)) {
+					options.card.vault.allowVaultCardOverride = false;
+					options.paypal = {
+						flow: 'vault',
+						env: $dropinUi.dataset.sandbox !== undefined ? 'sandbox' : 'production',
+						buttonStyle: {
+							color: 'blue',
+							shape: 'rect',
+							size: 'responsive',
+							label: 'paypal'
+						}
+					};
+				} else {
 					options.paypal = {
 						flow: 'checkout',
 						env: $dropinUi.dataset.sandbox ? 'sandbox' : 'production',
@@ -102,8 +115,6 @@
 							totalPrice: amount
 						}
 					};
-				} else {
-					options.card.vault.allowVaultCardOverride = false;
 				}
 
 				if ($dropinUi.dataset.threedsecure) {

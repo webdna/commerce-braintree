@@ -1136,10 +1136,17 @@ class Gateway extends BaseGateway
 				'vault' => false,
 				'manage' => false,
 				'subscription' => false,
+				'paymentSource' => false,
 				'googlePayMerchantId' => $this->getGooglePayMerchantId(),
 			],
 			$params
 		);
+
+		// payment-source mode (saving a source, or subscribing): the client token is the signed-in user's, so the drop-in vaults against their customer
+		if ($params['paymentSource'] || $params['subscription']) {
+			$params['paymentSource'] = true;
+			$params['vault'] = true;
+		}
 
 		$orderId = $request->getParam('number');
 		if ($orderId) {

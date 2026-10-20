@@ -2,7 +2,7 @@
 spec: Braintree for Craft Commerce 3.2.0 — payment sources
 slug: braintree-3-2-payment-sources
 status: draft
-version: 0.3
+version: 0.4
 date: 2026-10-20
 author: Claude (with Sam Birch)
 client: webdna (Craft Plugin Store product)
@@ -12,7 +12,7 @@ related: [webdna/commerce-braintree#53]
 
 # Braintree for Craft Commerce 3.2.0 — payment sources
 
-> **Status:** draft - **Version:** 0.3
+> **Status:** draft - **Version:** 0.4
 > A customer can save a card or PayPal account as a Commerce payment source, subscribe to a plan
 > with it, and pay an order with it. Until now no subscription could be started: `subscribe()`
 > needs a saved payment source and the gateway told Commerce it could not hold one.
@@ -179,8 +179,21 @@ Commerce 5's in every line this spec relies on (checked 20 Oct 2026).
       type back so a saved PayPal account is charged without the order's addresses, as a posted
       PayPal nonce is. A token Commerce already holds is replaced by deleting the old row only, never
       the method in Braintree. TS-* against the sandbox stay in B4.
-- [ ] **1.3 Drop-in payment-source mode** — `src/templates/paymentForms/dropin-ui.twig`, `src/assetbundles/dropinui/dist/js/DropinUi.js`, `Gateway::getSitePaymentFormHtml()`
+- [x] **1.3 Drop-in payment-source mode** — `src/templates/paymentForms/dropin-ui.twig`, `src/assetbundles/dropinui/dist/js/DropinUi.js`, `Gateway::getSitePaymentFormHtml()`
       Rules: BR-7 · Verify: TS-3, TS-4
+      Built 20 Oct 2026, proved without sandbox keys. `paymentSource: true` (or `subscription: true`)
+      sets `vault`, so the client token carries the signed-in user's customer, and renders
+      `data-payment-source`. The real form rendered in craft5 with a recording fake SDK, six cases:
+      checkout signed in and as a guest (no attribute, no customer on the token), `paymentSource`
+      and `subscription` (attribute, token customer = user uid), `vault`+`manage` alone (customer,
+      no attribute), a guest in source mode (attribute, no customer). The real `DropinUi.js`, old and
+      new, run in Node against a fake form and a fake `braintree.dropin.create`: checkout options
+      byte-identical to 3.1.2 (plain, and sandbox + 3DS + `dropinOptions`); source and subscription
+      mode give PayPal `flow: 'vault'` with no amount, no Apple Pay or Google Pay, card vaulted with
+      no override; `dropinOptions` still merges last. Subscription mode had no PayPal at all before.
+      Found, left: `data-sandbox` renders with no value, so checkout's `dataset.sandbox ? …` always
+      says production; Drop-in takes the environment from the client token, so it is inert, and
+      source mode tests presence instead. TS-3/TS-4 against the sandbox stay in B4.
 - [ ] **1.4 Release** — `README.md`, `CHANGELOG.md` (3.2.0); reply on #53 and close it when tagged
       Verify: README forms copied into craft5 templates and run as TS-1, TS-4, TS-6
 
@@ -240,6 +253,7 @@ ddev craft plugin/enable commerce-braintree
 
 | Date | Version | Change | By |
 |---|---|---|---|
+| 2026-10-20 | 0.4 | 1.3 built: drop-in payment-source mode (PayPal vault flow, token for the signed-in user) | Claude |
 | 2026-10-20 | 0.3 | 1.2 built: gateway payment sources; subscribe()'s plan TypeError fixed | Claude |
 | 2026-10-20 | 0.2 | 1.1 built: ownership checks on both controllers | Claude |
 | 2026-10-20 | 0.1 | First draft, from #53 and the 3.1.2 triage finding that subscriptions cannot start | Claude |
