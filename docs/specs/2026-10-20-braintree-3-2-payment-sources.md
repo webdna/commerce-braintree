@@ -2,7 +2,7 @@
 spec: Braintree for Craft Commerce 3.2.0 — payment sources
 slug: braintree-3-2-payment-sources
 status: draft
-version: 0.4
+version: 0.5
 date: 2026-10-20
 author: Claude (with Sam Birch)
 client: webdna (Craft Plugin Store product)
@@ -12,7 +12,7 @@ related: [webdna/commerce-braintree#53]
 
 # Braintree for Craft Commerce 3.2.0 — payment sources
 
-> **Status:** draft - **Version:** 0.4
+> **Status:** draft - **Version:** 0.5
 > A customer can save a card or PayPal account as a Commerce payment source, subscribe to a plan
 > with it, and pay an order with it. Until now no subscription could be started: `subscribe()`
 > needs a saved payment source and the gateway told Commerce it could not hold one.
@@ -194,8 +194,24 @@ Commerce 5's in every line this spec relies on (checked 20 Oct 2026).
       Found, left: `data-sandbox` renders with no value, so checkout's `dataset.sandbox ? …` always
       says production; Drop-in takes the environment from the client token, so it is inert, and
       source mode tests presence instead. TS-3/TS-4 against the sandbox stay in B4.
-- [ ] **1.4 Release** — `README.md`, `CHANGELOG.md` (3.2.0); reply on #53 and close it when tagged
+- [x] **1.4 Release** — `README.md`, `CHANGELOG.md` (3.2.0); reply on #53 and close it when tagged
       Verify: README forms copied into craft5 templates and run as TS-1, TS-4, TS-6
+      Built 20 Oct 2026. README "Payment sources" (save, list and delete, pay with a saved source),
+      "Subscribing" (the drop-in only for a customer with nothing saved) and "Changing a
+      subscription's payment method"; CHANGELOG 3.2.0 dated "Unreleased" until the tag. Proved
+      without sandbox keys: the README's Twig blocks extracted verbatim into craft5 templates (the
+      gateway handle swapped), rendered as a signed-in customer and their fields posted to Commerce's
+      real `payment-sources/add`, `payment-sources/delete` and `subscriptions/subscribe` actions with
+      the recording fake SDK, fixtures rolled back. 23 checks: subscribing with nothing saved shows
+      the namespaced drop-in, vaults the nonce on the user's customer, saves the source and charges
+      the subscription to it; two saved cards (the first primary) are described "Visa ending in
+      ••••1111" with the primary set; a second subscribe has no drop-in and charges the primary, not
+      the newest; the pay form lists one `paymentSourceId` radio per source; delete removes the
+      method in Braintree and the row in Commerce. The pay form was rendered, not posted (no cart);
+      paying with a source is 1.2's. Found by it: the drop-in must be output with `|raw` —
+      `getPaymentFormHtml()` is declared `string`, so the plugin's Markup is cast back and Twig
+      escapes it — so every README example now carries `|raw`, the 3.1.2 `dropinOptions` one
+      included. The #53 reply and close wait for the tag (Sam). TS-* against the sandbox stay in B4.
 
 ---
 
@@ -235,7 +251,7 @@ disable it after.
 ## B4. Definition of done
 
 - [ ] TS-1 to TS-8 and TN-1 to TN-4 pass in craft5 against the sandbox
-- [ ] README documents saving a source, subscribing and paying with one
+- [x] README documents saving a source, subscribing and paying with one
 - [ ] CHANGELOG 3.2.0; committed, not pushed or tagged until Sam says
 
 ## B5. Verification
@@ -253,6 +269,7 @@ ddev craft plugin/enable commerce-braintree
 
 | Date | Version | Change | By |
 |---|---|---|---|
+| 2026-10-20 | 0.5 | 1.4 built: README payment sources + subscribing, CHANGELOG 3.2.0; README forms need `|raw` | Claude |
 | 2026-10-20 | 0.4 | 1.3 built: drop-in payment-source mode (PayPal vault flow, token for the signed-in user) | Claude |
 | 2026-10-20 | 0.3 | 1.2 built: gateway payment sources; subscribe()'s plan TypeError fixed | Claude |
 | 2026-10-20 | 0.2 | 1.1 built: ownership checks on both controllers | Claude |

@@ -8,6 +8,7 @@ This plugin provides a [Braintree](https://www.braintreegateway.com) integration
 
 -   Merchant Accounts: supports Braintree's merchant accounts for multiple payment currencies.
 -   Subscriptions: support subscription integration.
+-   Payment sources: customers can save a card or PayPal account, subscribe with it and pay orders with it.
 -   DropinUi: Braintree's dropinUi is the default for `getPaymentFromHTML()` method.
 -   Supports 3DSecure 2.
 -   Supports Paypal, Apple Pay & Google Pay.
@@ -113,10 +114,86 @@ Any of Braintree's [drop-in `create()` options](https://braintree.github.io/brai
         paypal: null,
         paymentOptionPriority: ['card', 'googlePay', 'applePay'],
     },
-}) }}
+})|raw }}
 ```
 
 This example removes the CVV placeholder dots (so an autofilled card without a CVV no longer looks complete), hides PayPal and orders the remaining payment methods. [Field overrides](https://developer.paypal.com/braintree/docs/guides/drop-in/customization/javascript/v3/#field-overrides) lists what each card field accepts.
+
+## Payment sources
+
+A payment source is a card or PayPal account saved in Braintree's vault against the customer, and listed in Commerce as, for example, "Visa ending in ••••1111" or "PayPal (buyer@example.com)". The Braintree customer's id is the Craft user's uid; it is created the first time it is needed. Deleting a payment source in Commerce deletes it from Braintree too.
+
+Pass `paymentSource: true` to `getPaymentFormHtml()` for a form that saves a payment source. The drop-in then offers a card or PayPal (in PayPal's vault flow) and no Apple Pay or Google Pay, which need an amount and cannot be saved from the drop-in. `subscription: true` does the same.
+
+Output the drop-in with `|raw`, namespace its fields with Commerce's `commercePaymentFormNamespace` filter, and give the form a `<button type="submit">`, which the drop-in enables once a payment method is entered.
+
+### Saving a payment source
+
+The customer must be signed in.
+
+```twig
+{% requireLogin %}
+{% set gateway = craft.commerce.gateways.getGatewayByHandle('braintree') %}
+
+<form method="post">
+    {{ csrfInput() }}
+    {{ actionInput('commerce/payment-sources/add') }}
+    {{ hiddenInput('gatewayId', gateway.id) }}
+    {{ redirectInput('account/payment-methods') }}
+
+    {% namespace gateway.handle|commercePaymentFormNamespace %}
+        {{ gateway.getPaymentFormHtml({paymentSource: true})|raw }}
+    {% endnamespace %}
+
+    <label>
+        <input type="checkbox" name="isPrimaryPaymentSource" value="1">
+        Use this for my subscriptions
+    </label>
+
+    <button type="submit">Save</button>
+</form>
+```
+
+A refusal from Braintree (a declined card, for example) comes back as "Could not create the payment source." with Braintree's message.
+
+Listing and deleting the customer's saved sources uses Commerce's own actions:
+
+```twig
+{% for source in craft.commerce.paymentSources.getAllGatewayPaymentSourcesByCustomerId(gateway.id, currentUser.id) %}
+    <form method="post">
+        {{ csrfInput() }}
+        {{ actionInput('commerce/payment-sources/delete') }}
+        {{ hiddenInput('id', source.id) }}
+        {{ source.description }}
+        <button type="submit">Delete</button>
+    </form>
+{% endfor %}
+```
+
+`commerce/payment-sources/set-primary-payment-source`, posted with the source's `id`, makes it the one subscriptions use.
+
+### Paying with a saved payment source
+
+Post the source's id as `paymentSourceId` to `commerce/payments/pay`. The order is charged to the saved card or PayPal account; no drop-in is needed.
+
+```twig
+<form method="post">
+    {{ csrfInput() }}
+    {{ actionInput('commerce/payments/pay') }}
+    {{ redirectInput('shop/customer/order?number={number}') }}
+
+    {% for source in craft.commerce.paymentSources.getAllPaymentSourcesByCustomerId(currentUser.id) %}
+        <label>
+            <input type="radio" name="paymentSourceId" value="{{ source.id }}" {{ loop.first ? 'checked' }}>
+            {{ source.description }}
+        </label>
+    {% endfor %}
+
+    <button type="submit">Pay</button>
+</form>
+```
+
+A checkout that posts the drop-in's fields, as before, is charged exactly as it always was, and saves no payment source.
 
 ## Subscriptions
 
@@ -124,6 +201,38 @@ This example removes the CVV placeholder dots (so an autofilled card without a C
 
 1. To create a subscription plan, it must first be created within your Braintree account.
 2. Go to Commerce → Settings → Subscription plans and create a new subscription plan.
+
+### Subscribing
+
+A subscription is charged to a saved payment source: the customer's primary one if it is on this gateway, otherwise the one they saved most recently. A customer with no saved source enters one in the drop-in on the subscribe form, and Commerce saves it before the subscription starts. Show the drop-in only to customers with nothing saved, so that the others subscribe with their primary source without re-entering it.
+
+```twig
+{% requireLogin %}
+{% set plan = craft.commerce.plans.getPlanByHandle('monthly') %}
+{% set gateway = plan.getGateway() %}
+{% set sources = craft.commerce.paymentSources.getAllGatewayPaymentSourcesByCustomerId(gateway.id, currentUser.id) %}
+
+<form method="post">
+    {{ csrfInput() }}
+    {{ actionInput('commerce/subscriptions/subscribe') }}
+    {{ hiddenInput('planUid', plan.uid|hash) }}
+    {{ redirectInput('account/subscriptions') }}
+
+    {% if sources is empty %}
+        {% namespace gateway.handle|commercePaymentFormNamespace %}
+            {{ gateway.getPaymentFormHtml({subscription: true})|raw }}
+        {% endnamespace %}
+    {% endif %}
+
+    <button type="submit">Subscribe</button>
+</form>
+```
+
+With no saved source and no drop-in fields posted, subscribing fails with "No payment sources are saved to use for subscriptions."
+
+### Changing a subscription's payment method
+
+`commerce-braintree/subscriptions/update-payment` takes `subscriptionUid` and `planUid` (both hashed) with the drop-in's fields, not namespaced (`{{ gateway.getPaymentFormHtml({subscription: true})|raw }}` straight into the form), and must be posted by the subscription's own customer. `commerce-braintree/payment-methods/delete` takes the gateway's `gateway` handle and a vaulted method's `token`, and deletes it only when it belongs to the signed-in customer. Both accept POST requests only.
 
 ### Options when subscribing
 

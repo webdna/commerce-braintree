@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.2.0 - Unreleased
+### Added
+- Payment sources: a customer can save a card or PayPal account with Commerce's `commerce/payment-sources/add` action, subscribe with it and pay orders with it (`paymentSourceId`). Each is vaulted on the customer's Braintree customer (created if missing) and described as "Visa ending in ••••1111" or "PayPal (email)"; deleting one in Commerce deletes it in Braintree ([#53](https://github.com/webdna/commerce-braintree/issues/53)).
+- A `paymentSource` option for `getPaymentFormHtml()`: the drop-in offers a card or PayPal in its vault flow, with no Apple Pay or Google Pay. `subscription: true` now does the same, PayPal included.
+- README sections on saving a payment source, paying with one and subscribing.
+
+### Changed
+- Subscriptions are charged to the customer's primary payment source when it is on the Braintree gateway, otherwise to the one saved most recently.
+- `commerce-braintree/payment-methods/delete` and `commerce-braintree/subscriptions/update-payment` now accept POST requests from a signed-in user only.
+
+### Fixed
+- Fixed a security issue where any signed-in user could delete another customer's vaulted payment method, or change another customer's subscription, through the plugin's two controller actions.
+- Fixed subscriptions never starting on Craft 4 and 5 (a TypeError in `subscribe()`).
+- Fixed saving a payment source throwing on Commerce 4 and 5 (`PaymentSource` has no `userId`).
+- Fixed a refused subscription hiding Braintree's reason.
+
 ## 3.1.2 - 2026-10-20
 ### Added
 - A `dropinOptions` option for `getPaymentFormHtml()`: any of Braintree's drop-in options, merged over the plugin's own ([#60](https://github.com/webdna/commerce-braintree/issues/60)).
