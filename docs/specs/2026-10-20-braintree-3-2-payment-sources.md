@@ -156,9 +156,17 @@ Commerce 5's in every line this spec relies on (checked 20 Oct 2026).
 
 ### Tasks
 
-- [ ] **1.1 Controller ownership** — `src/controllers/PaymentMethodsController.php`, `src/controllers/SubscriptionsController.php`
+- [x] **1.1 Controller ownership** — `src/controllers/PaymentMethodsController.php`, `src/controllers/SubscriptionsController.php`
       Rules: BR-8, BR-9 · Verify: TN-2, TN-3
       (A security fix in its own right; worth shipping first if 3.2.0 slips.)
+      Built 20 Oct 2026. Proved without sandbox keys: the real actions run through `runAction()` in a
+      bootstrapped craft5 web app, with the Braintree SDK swapped for a fake that records every call,
+      fixtures in a rolled-back transaction. 18 cases: owner delete (302 / JSON 200, Braintree delete,
+      Commerce row gone); another user's method, a second user, an unknown token, no token, a
+      non-Braintree gateway → 403 / JSON 403 with no Braintree delete; owner update reaches Braintree;
+      a second user, a plan on another gateway, no plan, no subscription → 403 with no Braintree call;
+      GET → 405, guest → refused. The old controllers fail the cross-user cases (a second user's POST
+      deleted the owner's method). TN-2/TN-3 against the sandbox stay in B4.
 - [ ] **1.2 Gateway payment sources** — `src/gateways/Gateway.php`
       Rules: BR-1 to BR-6, BR-10, BR-11 · Verify: TS-1, TS-2, TS-5, TS-6, TS-7, TS-8, TN-1, TN-4
 - [ ] **1.3 Drop-in payment-source mode** — `src/templates/paymentForms/dropin-ui.twig`, `src/assetbundles/dropinui/dist/js/DropinUi.js`, `Gateway::getSitePaymentFormHtml()`
@@ -222,4 +230,5 @@ ddev craft plugin/enable commerce-braintree
 
 | Date | Version | Change | By |
 |---|---|---|---|
+| 2026-10-20 | 0.2 | 1.1 built: ownership checks on both controllers | Claude |
 | 2026-10-20 | 0.1 | First draft, from #53 and the 3.1.2 triage finding that subscriptions cannot start | Claude |

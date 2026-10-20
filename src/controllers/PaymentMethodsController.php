@@ -15,6 +15,7 @@ use craft\web\Controller;
 use webdna\commerce\braintree\gateways\Gateway;
 
 use craft\commerce\Plugin as Commerce;
+use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
 /**
@@ -25,20 +26,60 @@ use yii\web\Response;
 class PaymentMethodsController extends Controller
 {
 
-	public function actionDelete(): Response
+	public function actionDelete(): ?Response
 	{
-		
+		$this->requirePostRequest();
+		$this->requireLogin();
+
 		$request = Craft::$app->getRequest();
-		
-		$handle = $request->getBodyParam('gateway');
-		$token = $request->getBodyParam('token');
-		
+
+		$handle = (string) $request->getBodyParam('gateway');
+		$token = (string) $request->getBodyParam('token');
+
 		$gateway = Commerce::getInstance()->getGateways()->getGatewayByHandle($handle);
 
-		$gateway->deletePaymentMethod($token);
+		// Nothing is deleted in Braintree until the method is known to be this user's
+		if (!$gateway instanceof Gateway || $token === '' || !$this->isUsersPaymentMethod($gateway, $token)) {
+			return $this->refuse();
+		}
 
-		return $this->redirectToPostedUrl();
+		if (!$gateway->deletePaymentMethod($token)) {
+			return $this->asFailure(Craft::t('commerce-braintree', 'Could not delete the payment method.'));
+		}
 
+		$paymentSources = Commerce::getInstance()->getPaymentSources();
+		$paymentSource = $paymentSources->getPaymentSourceByTokenAndGatewayId($token, $gateway->id);
+		if ($paymentSource) {
+			$paymentSources->deletePaymentSourceById($paymentSource->id);
+		}
+
+		return $this->asSuccess(Craft::t('commerce-braintree', 'Payment method deleted.'));
+	}
+
+	private function isUsersPaymentMethod(Gateway $gateway, string $token): bool
+	{
+		try {
+			$method = $gateway->getPaymentMethod($token);
+		} catch (\Braintree\Exception\NotFound $e) {
+			return false;
+		}
+
+		// Braintree customers are keyed by the Craft user's uid (Gateway::getToken())
+		return ($method->customerId ?? null) === Craft::$app->getUser()->getIdentity()->uid;
+	}
+
+	private function refuse(): ?Response
+	{
+		$message = Craft::t('commerce-braintree', 'You are not allowed to change this payment method.');
+
+		if (!Craft::$app->getRequest()->getAcceptsJson()) {
+			throw new ForbiddenHttpException($message);
+		}
+
+		$response = $this->asFailure($message);
+		$this->response->setStatusCode(403);
+
+		return $response;
 	}
 
 }

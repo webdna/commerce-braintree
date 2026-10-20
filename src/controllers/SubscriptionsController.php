@@ -15,6 +15,8 @@ use craft\web\Controller;
 
 use craft\commerce\elements\Subscription;
 use craft\commerce\Plugin as Commerce;
+use webdna\commerce\braintree\gateways\Gateway;
+use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
 /**
@@ -25,16 +27,29 @@ use yii\web\Response;
 class SubscriptionsController extends Controller
 {
 
-	public function actionUpdatePayment(): Response
+	public function actionUpdatePayment(): ?Response
 	{
-		
+		$this->requirePostRequest();
+		$this->requireLogin();
+
 		$request = Craft::$app->getRequest();
-		
+
 		$subscriptionUid = $request->getValidatedBodyParam('subscriptionUid');
 		$planUid = $request->getValidatedBodyParam('planUid');
 
-		$subscription = Subscription::find()->uid($subscriptionUid)->one();
-		$plan = Commerce::getInstance()->getPlans()->getPlanByUid($planUid);
+		$subscription = $subscriptionUid ? Subscription::find()->uid($subscriptionUid)->one() : null;
+		$plan = $planUid ? Commerce::getInstance()->getPlans()->getPlanByUid($planUid) : null;
+
+		// Nothing is sent to Braintree until the subscription is this user's and the plan is its gateway's
+		if (
+			!$subscription
+			|| (int) $subscription->userId !== (int) Craft::$app->getUser()->getId()
+			|| !$subscription->getGateway() instanceof Gateway
+			|| !$plan
+			|| (int) $plan->gatewayId !== (int) $subscription->gatewayId
+		) {
+			return $this->refuse();
+		}
 
 		$gateway = $subscription->getGateway();
 		$paymentForm = $gateway->getPaymentFormModel();
@@ -55,6 +70,20 @@ class SubscriptionsController extends Controller
 
 		return $this->redirectToPostedUrl();
 
+	}
+
+	private function refuse(): ?Response
+	{
+		$message = Craft::t('commerce-braintree', 'You are not allowed to change this subscription.');
+
+		if (!Craft::$app->getRequest()->getAcceptsJson()) {
+			throw new ForbiddenHttpException($message);
+		}
+
+		$response = $this->asFailure($message);
+		$this->response->setStatusCode(403);
+
+		return $response;
 	}
 
 }
