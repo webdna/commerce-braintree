@@ -1,7 +1,7 @@
 ---
 spec: Braintree for Craft Commerce 3.2.0 — payment sources
 slug: braintree-3-2-payment-sources
-status: draft
+status: released
 version: 0.8
 date: 2026-10-20
 author: Claude (with Sam Birch)
@@ -287,7 +287,7 @@ disable it after.
       a saved card replaced its row and so dropped its primary flag — the existing row is now reused;
       Braintree's refusal reason now reaches `paymentFormErrors`.
 - [x] README documents saving a source, subscribing and paying with one
-- [ ] CHANGELOG 3.2.0; committed, not pushed or tagged until Sam says
+- [x] CHANGELOG 3.2.0; committed, not pushed or tagged until Sam says — released 20 Oct 2026 at Sam's say
 
 ## B5. Verification
 
