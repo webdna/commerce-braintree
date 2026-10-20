@@ -2,7 +2,7 @@
 spec: Braintree for Craft Commerce 3.2.0 — payment sources
 slug: braintree-3-2-payment-sources
 status: draft
-version: 0.6
+version: 0.7
 date: 2026-10-20
 author: Claude (with Sam Birch)
 client: webdna (Craft Plugin Store product)
@@ -12,7 +12,7 @@ related: [webdna/commerce-braintree#53]
 
 # Braintree for Craft Commerce 3.2.0 — payment sources
 
-> **Status:** draft - **Version:** 0.6
+> **Status:** draft - **Version:** 0.7
 > A customer can save a card or PayPal account as a Commerce payment source, subscribe to a plan
 > with it, and pay an order with it. Until now no subscription could be started: `subscribe()`
 > needs a saved payment source and the gateway told Commerce it could not hold one.
@@ -49,8 +49,7 @@ methods and subscriptions.
 `subscribe()` source choice; payment-source mode of the drop-in; ownership checks on the plugin's
 two controllers; README "Payment sources" and "Subscribing" sections; CHANGELOG 3.2.0.
 
-**Out:** 3-D Secure or card verification on vaulting (Braintree's account-level verification
-settings still apply). Apple Pay / Google Pay sources. Payment sources in the CP payment modal
+**Out:** 3-D Secure on vaulting. Apple Pay / Google Pay sources. Payment sources in the CP payment modal
 (it stays hosted fields, card entry only). Migrating vaulted methods that exist in Braintree but
 not in Commerce. Any change to the hosted-fields form.
 
@@ -112,6 +111,13 @@ stays the Craft user's uid, as `getToken()` already creates it.
   user's `customerId`; a nonce, when posted, still wins over a token.
 - **BR-11** Nothing changes for a store that never uses payment sources: checkout with the
   drop-in posts a nonce and is charged exactly as in 3.1.2.
+- **BR-12** A gateway setting, "Verify cards when saved?" (`verifyCards`, env-able, **off by
+  default**). On: `createPaymentMethod()` sends `verifyCard` with the primary payment currency's
+  merchant account as `verificationMerchantAccountId`, and the customer's primary billing address
+  when they have one; a declined card is refused under BR-4. Off: no verification is asked for,
+  as in 3.1.2. (Sam, 20 Oct 2026: off by default because an account's AVS rules apply to the
+  verification — mw-core's sandbox refuses every card without a street address, and the drop-in
+  collects only a postcode.)
 
 ## 6. Interfaces
 
@@ -121,7 +127,8 @@ stays the Craft user's uid, as `getToken()` already creates it.
 | `Gateway::createPaymentSource()` | BR-2 to BR-4 |
 | `Gateway::deletePaymentSource()` | BR-5 |
 | `Gateway::subscribe()` | BR-6 |
-| `Gateway::createPaymentMethod()` | ensures the Braintree customer first (shared with `getToken()`) |
+| `Gateway::createPaymentMethod()` | ensures the Braintree customer first (shared with `getToken()`); BR-12 |
+| `Gateway` `verifyCards` setting, `gatewaySettings.twig` | BR-12 |
 | `getPaymentFormHtml({paymentSource: true})` | new param; BR-7 |
 | `paymentForms/dropin-ui.twig`, `DropinUi.js` | `data-payment-source`; PayPal vault flow |
 | `controllers/PaymentMethodsController` | BR-8 |
@@ -143,7 +150,7 @@ the sandbox and synced to Commerce. Test cards from Braintree's sandbox docs.
 | TS-6 | Journey 5: checkout with `paymentSourceId` | Order paid; Braintree transaction uses the vaulted token |
 | TS-7 | Journey 6: delete in Commerce | Gone from Braintree; deleting again in Braintree's absence still clears Commerce |
 | TS-8 | Checkout with a nonce as in 3.1.2 (BR-11) | Paid; no payment source created |
-| TN-1 | Card `4000 1111 1111 1115` (processor declined) on add | "Could not create the payment source." with Braintree's message; no row |
+| TN-1 | With "Verify cards when saved?" on and a primary billing address: a processor-declined card on add | "Could not create the payment source." with Braintree's message ("Do Not Honor") on the form; no row. With it off the card is saved, as in 3.1.2 |
 | TN-2 | Journey 7, both actions, as a second user | 403; subscription and vaulted method unchanged |
 | TN-3 | `update-payment` with a plan from another gateway | Refused before any Braintree call |
 | TN-4 | Subscribe with no source and no drop-in fields | "No payment sources are saved…" |
@@ -267,7 +274,12 @@ disable it after.
       removes it from Commerce and Braintree (TS-7). **Open:** TS-4/TS-5 (no sandbox plan); TN-1 —
       `fake-processor-declined-visa-nonce` IS saved, because vaulting sends no `verifyCard` and the
       sandbox account does not verify cards; §2 puts verification out of scope, so TN-1 holds only
-      for an account that verifies (decision for Sam: add `verifyCard`, or reword TN-1).
+      for an account that verifies. **Resolved (BR-12, Sam): a setting, off by default.** Run against
+      the sandbox, 14 checks: off — a declined card is saved as before; on, no address — "Street
+      address is required." on the form; on with a primary billing address — a valid Visa is
+      verified ("verified", street address sent), the declined card refused "Do Not Honor" (TN-1
+      passes), PayPal saves, re-saving keeps the row, a Luhn-invalid card is refused; the settings
+      page renders the field.
       Found and fixed on the way: a saved method selected on load posted an empty nonce ("Nonce is
       required."), as the submit handler was attached only on `paymentMethodRequestable`; re-saving
       a saved card replaced its row and so dropped its primary flag — the existing row is now reused;
@@ -290,6 +302,7 @@ ddev craft plugin/enable commerce-braintree
 
 | Date | Version | Change | By |
 |---|---|---|---|
+| 2026-10-20 | 0.7 | BR-12: "Verify cards when saved?" setting, off by default (Sam); TN-1 passes with it on | Claude |
 | 2026-10-20 | 0.6 | Sandbox run (mw-core keys): all but TS-4/TS-5 (no plan) and TN-1 (verification) pass; three fixes | Claude |
 | 2026-10-20 | 0.5 | 1.4 built: README payment sources + subscribing, CHANGELOG 3.2.0; README forms need `|raw` | Claude |
 | 2026-10-20 | 0.4 | 1.3 built: drop-in payment-source mode (PayPal vault flow, token for the signed-in user) | Claude |

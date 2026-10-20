@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Added
 - Payment sources: a customer can save a card or PayPal account with Commerce's `commerce/payment-sources/add` action, subscribe with it and pay orders with it (`paymentSourceId`). Each is vaulted on the customer's Braintree customer (created if missing) and described as "Visa ending in ••••1111" or "PayPal (email)"; deleting one in Commerce deletes it in Braintree ([#53](https://github.com/webdna/commerce-braintree/issues/53)).
 - A `paymentSource` option for `getPaymentFormHtml()`: the drop-in offers a card or PayPal in its vault flow, with no Apple Pay or Google Pay. `subscription: true` now does the same, PayPal included.
-- README sections on saving a payment source, paying with one and subscribing.
+- A "Verify cards when saved?" gateway setting (off by default): Braintree verifies a card before it is saved as a payment source, against the primary currency's merchant account and with the customer's primary billing address, so a declined card is refused when it is saved.
+- README sections on saving a payment source, verifying cards, paying with a saved source and subscribing.
 
 ### Changed
 - Subscriptions are charged to the customer's primary payment source when it is on the Braintree gateway, otherwise to the one saved most recently.

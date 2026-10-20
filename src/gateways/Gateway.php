@@ -86,6 +86,8 @@ class Gateway extends BaseGateway
 
 	private bool|string $_testMode = false;
 
+	private bool|string $_verifyCards = false;
+
 	private array $_merchantAccountIds = [];
 	
 	private array $_siteOverrides = [];
@@ -135,6 +137,7 @@ class Gateway extends BaseGateway
 		$settings['publicKey'] = $this->getPublicKey(false);
 		$settings['privateKey'] = $this->getPrivateKey(false);
 		$settings['testMode'] = $this->getTestMode(false);
+		$settings['verifyCards'] = $this->getVerifyCards(false);
 		$settings['merchantAccountIds'] = $this->_merchantAccountIds;
 		$settings['siteOverrides'] = $this->_siteOverrides;
 		$settings['googlePayMerchantId'] = $this->getGooglePayMerchantId(false);
@@ -155,6 +158,16 @@ class Gateway extends BaseGateway
 	public function setTestMode(bool|string $testMode): void
 	{
 		$this->_testMode = $testMode;
+	}
+
+	public function getVerifyCards(bool $parse = true): bool|string
+	{
+		return $parse ? App::parseBooleanEnv($this->_verifyCards) : $this->_verifyCards;
+	}
+
+	public function setVerifyCards(bool|string $verifyCards): void
+	{
+		$this->_verifyCards = $verifyCards;
 	}
 	
 	
@@ -371,13 +384,27 @@ class Gateway extends BaseGateway
 
 		$this->ensureCustomer($user);
 
-		return (object) $this->gateway->paymentMethod()->create([
+		$params = [
 			'customerId' => $user->uid,
 			'paymentMethodNonce' => $sourceData->nonce,
 			'options' => [
 				'makeDefault' => (bool) $sourceData->default,
 			],
-		]);
+		];
+
+		// with "Verify cards when saved", a card the bank declines is refused now, not at its first charge; the account's
+		// address rules apply to the verification, so the customer's primary billing address goes with it when they have one
+		if ($this->getVerifyCards()) {
+			$params['options']['verifyCard'] = true;
+			if ($merchantAccountId = $this->getMerchantAccountId(Commerce::getInstance()->getPaymentCurrencies()->getPrimaryPaymentCurrencyIso())) {
+				$params['options']['verificationMerchantAccountId'] = $merchantAccountId;
+			}
+			if ($address = $user->getPrimaryBillingAddress()) {
+				$params['billingAddress'] = $this->_formatAddress($address);
+			}
+		}
+
+		return (object) $this->gateway->paymentMethod()->create($params);
 	}
 
 	public function deletePaymentMethod($token): bool

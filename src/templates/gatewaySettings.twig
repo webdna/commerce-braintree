@@ -68,6 +68,15 @@
      errors: gateway.getErrors('testMode'),
 }) }}
 
+{{ booleanMenuField({
+     label: "Verify cards when saved?"|t('commerce-braintree'),
+     instructions: "Braintree verifies a card before it is saved as a payment source, so one the bank declines is refused. Your account's address rules apply: if they require a street address, a customer must have a primary billing address to save a card."|t('commerce-braintree'),
+     name: 'verifyCards',
+     value: gateway.getVerifyCards(false),
+     includeEnvVars: true,
+     errors: gateway.getErrors('verifyCards'),
+}) }}
+
 {% set currencies = craft.commerce.paymentCurrencies.getAllPaymentCurrencies %}
 {# {% if currencies|length > 1 %} #}
 <hr>

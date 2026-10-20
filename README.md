@@ -172,6 +172,12 @@ Listing and deleting the customer's saved sources uses Commerce's own actions:
 
 `commerce/payment-sources/set-primary-payment-source`, posted with the source's `id`, makes it the one subscriptions use.
 
+### Verifying cards when they are saved
+
+Turn on **Verify cards when saved?** in the gateway's settings to have Braintree verify a card before it is saved, so a card the bank declines is refused on the form ("Do Not Honor", for example) instead of failing at its first charge. Braintree makes a small authorisation and voids it. PayPal accounts are not affected. The setting is off by default and takes an environment variable.
+
+The verification runs against the merchant account of the store's primary currency and is subject to your Braintree account's address (AVS) and CVV rules. The customer's primary billing address is sent with it when they have one. If your rules require a street address, a customer with no primary billing address cannot save a card and sees "Street address is required.", so ask for an address before the card on those accounts.
+
 ### Paying with a saved payment source
 
 Post the source's id as `paymentSourceId` to `commerce/payments/pay`. The order is charged to the saved card or PayPal account; no drop-in is needed.
