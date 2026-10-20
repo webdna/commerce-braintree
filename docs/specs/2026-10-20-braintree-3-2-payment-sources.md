@@ -2,7 +2,7 @@
 spec: Braintree for Craft Commerce 3.2.0 — payment sources
 slug: braintree-3-2-payment-sources
 status: draft
-version: 0.5
+version: 0.6
 date: 2026-10-20
 author: Claude (with Sam Birch)
 client: webdna (Craft Plugin Store product)
@@ -12,7 +12,7 @@ related: [webdna/commerce-braintree#53]
 
 # Braintree for Craft Commerce 3.2.0 — payment sources
 
-> **Status:** draft - **Version:** 0.5
+> **Status:** draft - **Version:** 0.6
 > A customer can save a card or PayPal account as a Commerce payment source, subscribe to a plan
 > with it, and pay an order with it. Until now no subscription could be started: `subscribe()`
 > needs a saved payment source and the gateway told Commerce it could not hold one.
@@ -219,6 +219,11 @@ Commerce 5's in every line this spec relies on (checked 20 Oct 2026).
 
 ## B1. Before writing anything
 
+**Resolved 20 Oct 2026 for everything but plans:** mw-core's sandbox keys (Sam) are in craft5's
+`.env` as `BRAINTREE_MERCHANT_ID`, `_PUBLIC_KEY`, `_PRIVATE_KEY`, `_TEST_MODE`, `_USD_MERCHANT_ID`
+(craft5's store is USD); gateway settings reference them, never the values. **That sandbox has no
+subscription plans**, and Braintree makes plans only in its Control Panel, so TS-4/TS-5 wait on one.
+
 **Braintree sandbox credentials in craft5.** The `compatBraintree` gateway holds dummy keys
 (merchant id `dummy`), so no token can be generated and nothing in §7 can run. Sam to supply a
 sandbox merchant id, public and private key and a merchant account id per currency, set as env
@@ -251,6 +256,22 @@ disable it after.
 ## B4. Definition of done
 
 - [ ] TS-1 to TS-8 and TN-1 to TN-4 pass in craft5 against the sandbox
+      **Run 20 Oct 2026 against mw-core's sandbox.** Server side, Commerce's real actions with the real
+      SDK (Commerce fixtures rolled back; sandbox customers deleted, transactions voided): TS-1 (the
+      `fake-valid-visa-nonce` card is 4012…1881, so "Visa ending in ••••1881"), TS-2, TS-3 ("PayPal
+      (jane.doe@paypal.com)" from `fake-paypal-billing-agreement-nonce`), TS-6 (Braintree's
+      transaction carries the vaulted token), TS-7 both halves, TS-8, TN-2 both actions, TN-3, TN-4
+      pass; a Luhn-invalid card is refused with "Credit card number is invalid." on the form (BR-4).
+      In a browser, the README's save form on a temporary frontend gateway: the drop-in offers Card
+      and PayPal only; 4111 1111 1111 1111 typed in saves "Visa ending in ••••1111" (TS-1); Delete
+      removes it from Commerce and Braintree (TS-7). **Open:** TS-4/TS-5 (no sandbox plan); TN-1 —
+      `fake-processor-declined-visa-nonce` IS saved, because vaulting sends no `verifyCard` and the
+      sandbox account does not verify cards; §2 puts verification out of scope, so TN-1 holds only
+      for an account that verifies (decision for Sam: add `verifyCard`, or reword TN-1).
+      Found and fixed on the way: a saved method selected on load posted an empty nonce ("Nonce is
+      required."), as the submit handler was attached only on `paymentMethodRequestable`; re-saving
+      a saved card replaced its row and so dropped its primary flag — the existing row is now reused;
+      Braintree's refusal reason now reaches `paymentFormErrors`.
 - [x] README documents saving a source, subscribing and paying with one
 - [ ] CHANGELOG 3.2.0; committed, not pushed or tagged until Sam says
 
@@ -269,6 +290,7 @@ ddev craft plugin/enable commerce-braintree
 
 | Date | Version | Change | By |
 |---|---|---|---|
+| 2026-10-20 | 0.6 | Sandbox run (mw-core keys): all but TS-4/TS-5 (no plan) and TN-1 (verification) pass; three fixes | Claude |
 | 2026-10-20 | 0.5 | 1.4 built: README payment sources + subscribing, CHANGELOG 3.2.0; README forms need `|raw` | Claude |
 | 2026-10-20 | 0.4 | 1.3 built: drop-in payment-source mode (PayPal vault flow, token for the signed-in user) | Claude |
 | 2026-10-20 | 0.3 | 1.2 built: gateway payment sources; subscribe()'s plan TypeError fixed | Claude |

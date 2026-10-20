@@ -147,7 +147,9 @@
 						$submit.innerHTML = $submit.dataset.text;
 					}
 
+					// a vaulted method selected on load fires no paymentMethodRequestable event, so submit must ask it for a nonce here
 					if (dropinInstance.isPaymentMethodRequestable()) {
+						$form.addEventListener('submit', formSubmit);
 						reset($submit);
 					}
 					//need for vault

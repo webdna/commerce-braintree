@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fixed subscriptions never starting on Craft 4 and 5 (a TypeError in `subscribe()`).
 - Fixed saving a payment source throwing on Commerce 4 and 5 (`PaymentSource` has no `userId`).
 - Fixed a refused subscription hiding Braintree's reason.
+- Fixed the drop-in posting an empty nonce when a saved payment method was already selected on load (vaulted forms).
+- Braintree's reason for refusing a payment source is now on the payment form's errors (`paymentFormErrors`), as well as in the log.
+- Saving a card that is already saved now keeps its existing payment source, and its primary flag, instead of replacing it.
 
 ## 3.1.2 - 2026-10-20
 ### Added

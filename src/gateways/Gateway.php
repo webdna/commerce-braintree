@@ -477,29 +477,40 @@ class Gateway extends BaseGateway
 		try {
 			$response = $this->createPaymentMethod($sourceData, $userId);
 		} catch (PaymentSourceException $exception) {
+			$sourceData->addError('nonce', $exception->getMessage());
 			throw $exception;
 		} catch (\Throwable $exception) {
 			BT::error($exception->getMessage());
+			$sourceData->addError('nonce', $exception->getMessage());
 			throw new PaymentSourceException($exception->getMessage());
 		}
 
+		// Commerce's add action reports only its own message, plus the payment form's errors (paymentFormErrors)
 		if (!$response->success) {
 			BT::error('Create payment source: ' . $response->message);
+			$sourceData->addError('nonce', $response->message);
 			throw new PaymentSourceException($response->message);
 		}
 
 		$method = $response->paymentMethod;
 		$type = (new \ReflectionClass($method))->getShortName();
 
-		// Braintree can hand back a token Commerce already holds (the same PayPal account vaulted
-		// twice); drop the old row without asking Braintree to delete the method just returned
+		// Braintree can hand back a token Commerce already holds (a saved card picked again in the
+		// drop-in, the same PayPal account vaulted twice): reuse that row, so it stays primary if it
+		// was, and drop any further duplicates without asking Braintree to delete the method
+		$existingId = null;
 		foreach (Commerce::getInstance()->getPaymentSources()->getAllGatewayPaymentSourcesByCustomerId($this->id, $userId) as $source) {
 			if ($source->token == $method->token) {
-				\craft\commerce\records\PaymentSource::deleteAll(['id' => $source->id]);
+				if ($existingId === null) {
+					$existingId = $source->id;
+				} else {
+					\craft\commerce\records\PaymentSource::deleteAll(['id' => $source->id]);
+				}
 			}
 		}
 
 		return new PaymentSource([
+			'id' => $existingId,
 			'customerId' => $userId,
 			'gatewayId' => $this->id,
 			'token' => $method->token,
