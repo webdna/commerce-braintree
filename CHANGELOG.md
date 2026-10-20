@@ -4,8 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## 3.1.2 - 2026-10-20
+### Added
+- A `dropinOptions` option for `getPaymentFormHtml()`: any of Braintree's drop-in options, merged over the plugin's own ([#60](https://github.com/webdna/commerce-braintree/issues/60)).
+
 ### Fixed
+- Fixed the gateway settings page erroring on Craft 4 multi-site installs (`Site::getUiLabel()` is Craft 5 only) ([#58](https://github.com/webdna/commerce-braintree/issues/58)).
 - Fixed subscription renewal webhooks failing with a TypeError on Commerce 5 (`craft\commerce\models\Currency` no longer exists).
 - Fixed saving and finding payment sources on Commerce 5 (`getAllGatewayPaymentSourcesByUserId()` is now `getAllGatewayPaymentSourcesByCustomerId()`).
 - Fixed `NotFound` errors from the Braintree SDK not being caught when cancelling or refreshing a subscription.

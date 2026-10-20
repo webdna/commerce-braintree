@@ -110,6 +110,17 @@
 					options.threeDSecure = true;
 				}
 
+				// template-supplied dropinOptions, merged over everything above
+				if ($dropinUi.dataset.dropinOptions) {
+					try {
+						options = deepMerge(options, JSON.parse($dropinUi.dataset.dropinOptions));
+					} catch (e) {
+						console.error('Invalid dropinOptions JSON', e);
+					}
+					options.authorization = $token.value;
+					options.container = $dropinUi;
+				}
+
 				braintree.dropin.create(options, function(err, dropinInstance) {
 					if (err) {
 						console.error(err);
@@ -205,6 +216,26 @@
 				//$submit.prop('disabled', true);
 			}
 		});
+	}
+	function isPlainObject(value) {
+		return Object.prototype.toString.call(value) === '[object Object]';
+	}
+	// objects merge key by key; null removes a key; anything else replaces it
+	function deepMerge(target, source) {
+		if (!isPlainObject(source)) {
+			return target;
+		}
+		Object.keys(source).forEach(function(key) {
+			var value = source[key];
+			if (value === null) {
+				delete target[key];
+			} else if (isPlainObject(value) && isPlainObject(target[key])) {
+				target[key] = deepMerge(target[key], value);
+			} else {
+				target[key] = value;
+			}
+		});
+		return target;
 	}
 	function disable($button) {
 		$button.disabled = true;

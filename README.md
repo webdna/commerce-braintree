@@ -90,6 +90,34 @@ If you would like to allow the management of vaulted payment methods, then pass 
 gateway.getPaymentFormHtml({manage:true})
 ```
 
+### Drop-in options
+
+Any of Braintree's [drop-in `create()` options](https://braintree.github.io/braintree-web-drop-in/docs/current/module-braintree-web-drop-in.html#.create) can be passed as `dropinOptions`. They are merged over the options the plugin sets, so you only need to give the parts you want to change:
+
+- objects are merged key by key, so the plugin's other settings at the same level are kept;
+- a string, number, boolean or array replaces the plugin's value;
+- `null` removes the option, e.g. `paypal: null` hides PayPal.
+
+`authorization` and `container` are always set by the plugin. Options are passed as JSON, so they cannot contain JavaScript functions.
+
+```twig
+{{ gateway.getPaymentFormHtml({
+    dropinOptions: {
+        card: {
+            overrides: {
+                fields: {
+                    cvv: { placeholder: '' },
+                },
+            },
+        },
+        paypal: null,
+        paymentOptionPriority: ['card', 'googlePay', 'applePay'],
+    },
+}) }}
+```
+
+This example removes the CVV placeholder dots (so an autofilled card without a CVV no longer looks complete), hides PayPal and orders the remaining payment methods. [Field overrides](https://developer.paypal.com/braintree/docs/guides/drop-in/customization/javascript/v3/#field-overrides) lists what each card field accepts.
+
 ## Subscriptions
 
 ### Creating a subscription plan
