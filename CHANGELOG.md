@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.2.1 - 2026-10-23
+### Changed
+- New plugin icon: a white glyph on a black circle, with a white icon mask for the control panel nav.
+
 ## 3.2.0 - 2026-10-20
 ### Added
 - Payment sources: a customer can save a card or PayPal account with Commerce's `commerce/payment-sources/add` action, subscribe with it and pay orders with it (`paymentSourceId`). Each is vaulted on the customer's Braintree customer (created if missing) and described as "Visa ending in ••••1111" or "PayPal (email)"; deleting one in Commerce deletes it in Braintree ([#53](https://github.com/webdna/commerce-braintree/issues/53)).
